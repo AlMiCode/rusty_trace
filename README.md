@@ -1,8 +1,5 @@
 # WIP: Raytracer library in rust using sdl2
 
-## RADICAL !!!
-A radical branch with breaking changes. Work in progress.
-
 ## Current goal
 
 Create a program with graphical interface, that allows to set up a scene of geometrical objects, render it and display on a screen or save to a hard drive.
