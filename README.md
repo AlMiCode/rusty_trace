@@ -9,3 +9,12 @@ Create a program with graphical interface, that allows to set up a scene of geom
 - [ ] Implement basic collisions with simple geometry shapes
 - [ ] Generate image and save it
 - [ ] Display an image on a screen upon completion of rendering
+
+## Project structure
+
+``` text
+src/
+├── gui.rs  -- Manages sdl and draws scenes
+├── main.rs
+└── ray.rs  -- Holds the ray structure and its implementations
+```
