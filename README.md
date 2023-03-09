@@ -9,7 +9,7 @@ Create a program with graphical interface, that allows to set up a scene of geom
 
 ## To Do
 
-- [ ] Implement ray
+- [X] Implement ray
 - [ ] Implement basic collisions with simple geometry shapes
 - [ ] Generate image and save it
 - [ ] Display an image on a screen upon completion of rendering
