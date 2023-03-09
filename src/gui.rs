@@ -1,5 +1,3 @@
-extern crate sdl2;
-
 use sdl2::pixels::Color;
 use sdl2::render::WindowCanvas;
 use sdl2::{Sdl, VideoSubsystem, EventPump};
@@ -23,7 +21,10 @@ pub struct Gui {
 }
 
 impl Gui {
-    pub fn init(context: Sdl, dimensions: WindowDimensions, title: &str) -> Result<Gui, String> {
+    pub fn init(dimensions: WindowDimensions, title: &str) -> Result<Gui, String> {
+        // Why not just create sdl_context here?
+        let context = sdl2::init()?;
+
         let video = context.video()?;
         let event_pump = context.event_pump()?;
         let window = video.window(title, dimensions.width, dimensions.height)

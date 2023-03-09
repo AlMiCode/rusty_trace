@@ -1,5 +1,8 @@
 # WIP: Raytracer library in rust using sdl2
 
+## RADICAL !!!
+A radical branch with breaking changes. Work in progress.
+
 ## Current goal
 
 Create a program with graphical interface, that allows to set up a scene of geometrical objects, render it and display on a screen or save to a hard drive.
@@ -16,8 +19,8 @@ Create a program with graphical interface, that allows to set up a scene of geom
 ``` text
 src/
 ├── gui.rs     -- Manages sdl and draws scenes
+├── lib.rs     -- Holds basic LinAlg types and Ray structure and their implementations
 ├── main.rs
-├── ray.rs     -- Holds the ray structure and its implementations
 ├── scene.rs   -- Holds information about the scene, the gui struct should get a scene struct to draw
 └── shapes.rs  -- Holds the possible shapes, stored in Scene and used by Ray for computation
 ```
