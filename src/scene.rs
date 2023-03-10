@@ -1,7 +1,7 @@
 use crate::shapes::ShapeEnum;
 
 use crate::gui::WindowDimensions;
-use crate::Camera;
+use crate::{Float, Camera};
 use crate::{ray_colour, vec_to_rgb, Ray};
 
 use image::Rgb;
@@ -28,8 +28,8 @@ impl Scene {
     pub fn render(&mut self, buffer: &mut [u8], pitch: usize) {
         for j in 0..self.dimensions.height {
             for i in 0..self.dimensions.width {
-                let u: f64 = i as f64 / (self.dimensions.width - 1) as f64;
-                let v: f64 = j as f64 / (self.dimensions.height - 1) as f64;
+                let u: Float = i as Float / (self.dimensions.width - 1) as Float;
+                let v: Float = j as Float / (self.dimensions.height - 1) as Float;
                 let r = Ray::new(
                     self.camera.origin,
                     self.camera.lower_left_corner

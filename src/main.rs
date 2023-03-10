@@ -1,6 +1,6 @@
 use rusty_trace::gui::{Gui, WindowDimensions};
 use rusty_trace::scene::Scene;
-use rusty_trace::{Camera, Point3, Vector3};
+use rusty_trace::{Camera, Point3, Vector3, Float};
 use rusty_trace::shapes::{ShapeEnum, Sphere};
 
 static WIN_DIMENSIONS: WindowDimensions = WindowDimensions {
