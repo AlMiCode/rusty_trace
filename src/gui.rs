@@ -50,7 +50,16 @@ impl Gui {
         self.scene = Some(scene);
     }
 
-    pub fn mainloop(&mut self) {
+    pub fn mainloop(&mut self) -> Result<(), String> {
+        let texture_creator = self.canvas.texture_creator();
+        let mut texture = texture_creator
+            .create_texture_streaming(
+                PixelFormatEnum::RGB24,
+                self.dimensions.width,
+                self.dimensions.height,
+            )
+            .map_err(|e| e.to_string())?;
+
         'main: while !self.should_close {
             // poll events
             for event in self.event_pump.poll_iter() {
@@ -71,36 +80,23 @@ impl Gui {
             self.canvas.clear();
 
             if let Some(scene) = self.scene.as_mut() {
-                // Ill move the texture fields to a field in Gui in the future
-                let texture_creator = self.canvas.texture_creator();
-                let mut texture = texture_creator
-                    .create_texture_streaming(
-                        PixelFormatEnum::RGB24,
+                texture.with_lock(None, |buffer: &mut [u8], pitch: usize| {
+                    scene.render(buffer, pitch);
+                })?;
+                self.canvas.copy(
+                    &texture,
+                    None,
+                    Some(Rect::new(
+                        0,
+                        0,
                         self.dimensions.width,
                         self.dimensions.height,
-                    )
-                    .unwrap();
-                // texture.update(None, pixelbuf, 3).unwrap();
-                texture
-                    .with_lock(None, |buffer: &mut [u8], pitch: usize| {
-                        scene.render(buffer, pitch);
-                    })
-                    .unwrap();
-                self.canvas
-                    .copy(
-                        &texture,
-                        None,
-                        Some(Rect::new(
-                            0,
-                            0,
-                            self.dimensions.width,
-                            self.dimensions.height,
-                        )),
-                    )
-                    .unwrap();
+                    )),
+                )?;
             }
 
             self.canvas.present();
         }
+        Ok(())
     }
 }

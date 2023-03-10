@@ -22,7 +22,7 @@ fn main() -> Result<(), String> {
     );
 
     gui.set_scene(scene);
-    gui.mainloop();
+    gui.mainloop()?;
 
     Ok(())
 }
