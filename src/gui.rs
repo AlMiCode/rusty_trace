@@ -73,11 +73,19 @@ impl Gui {
             if let Some(scene) = self.scene.as_mut() {
                 // Ill move the texture fields to a field in Gui in the future
                 let texture_creator = self.canvas.texture_creator();
-                let mut texture = texture_creator.create_texture_streaming(PixelFormatEnum::RGB24, 256, 256).unwrap();
+                let mut texture = texture_creator
+                    .create_texture_streaming(
+                        PixelFormatEnum::RGB24,
+                        self.dimensions.width,
+                        self.dimensions.height,
+                    )
+                    .unwrap();
                 // texture.update(None, pixelbuf, 3).unwrap();
-                texture.with_lock(None, | buffer: &mut [u8], pitch: usize | {
-                    scene.render(buffer, pitch);
-                }).unwrap();
+                texture
+                    .with_lock(None, |buffer: &mut [u8], pitch: usize| {
+                        scene.render(buffer, pitch);
+                    })
+                    .unwrap();
                 self.canvas
                     .copy(
                         &texture,
