@@ -12,14 +12,8 @@ fn main() -> Result<(), String> {
     // initialize gui object
     let mut gui = Gui::init(WIN_DIMENSIONS, WIN_TITLE)?;
 
-    let scene = Scene::new(
-        Camera::new(
-            Point3::new(0.0, 0.0, 0.0),
-            Vector3::new(0.0, 0.0, 0.0),
-            100.0,
-        ),
-        WIN_DIMENSIONS,
-    );
+    // let aspect_ratio: f32 = (WIN_DIMENSIONS.width / WIN_DIMENSIONS.height) as f32;
+    let scene = Scene::new(Camera::default(), WIN_DIMENSIONS);
 
     gui.set_scene(scene);
     gui.mainloop()?;
