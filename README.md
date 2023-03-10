@@ -11,9 +11,6 @@ Create a program with graphical interface, that allows to set up a scene of geom
 - [ ] Generate image and save it
 - [ ] Display an image on a screen upon completion of rendering
 
-### Temporary todo's
-- [ ] Use proper error handling (midas)
-
 ## Project structure
 
 ``` text
