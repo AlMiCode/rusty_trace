@@ -1,5 +1,6 @@
-use cgmath::{point3, vec3, InnerSpace};
+use cgmath::{vec3, InnerSpace};
 use image::Rgb;
+use shapes::{ShapeEnum, HitObject};
 
 pub mod gui;
 pub mod scene;
@@ -21,8 +22,8 @@ pub struct Camera {
 
 impl Default for Camera {
     fn default() -> Camera {
-        let viewport_width = 2.0;
-        let viewport_height = (1280.0 / 720.0) * 2.0;
+        let viewport_height = 2.0;
+        let viewport_width = (1280.0 / 720.0) * 2.0;
         let focal_length = 1.0;
         let origin = Point3::new(0.0, 0.0, 0.0);
         let horizontal = Vector3::new(viewport_width, 0.0, 0.0);
@@ -55,9 +56,19 @@ impl Ray {
     }
 }
 
-pub fn ray_colour(ray: Ray) -> Colour {
-    if hit_sphere(point3(0.0, 0.0, -1.0), 0.5, &ray) {
-        vec3(1.0, 0.0, 0.0)
+pub fn ray_colour(ray: Ray, hittable: &Vec<ShapeEnum>) -> Colour {
+    let mut t = -1.0;
+    for shape in hittable {
+        let t1 = match shape {
+            ShapeEnum::Sphere(s) => s.hit(&ray),
+        };
+        if t1 == -1.0 { continue }
+        if t == -1.0 { t = t1 } else if t1 < t { t = t1 }
+    }
+    if t > 0.0 {
+        let normal_vec = ray.at(t) - Vector3::new(0.0,0.0,-1.0);
+        let normal_vec = Vector3::new(normal_vec.x, normal_vec.y, normal_vec.z).normalize();
+        0.5 * (normal_vec + Vector3::new(1.0, 1.0, 1.0))
     } else {
         let unit_dir = ray.direction.normalize();
         let t = 0.5 * (unit_dir.y + 1.0);
@@ -67,13 +78,4 @@ pub fn ray_colour(ray: Ray) -> Colour {
 
 pub fn vec_to_rgb(vec: Colour) -> Rgb<u8> {
     Rgb(vec.map(|n| (n.clamp(0.0, 1.0) * 255.0) as u8).into())
-}
-
-fn hit_sphere(center: Point3, radius: f64, ray: &Ray) -> bool {
-    let oc = ray.origin - center;
-    let a = ray.direction.dot(ray.direction);
-    let b = 2.0 * oc.dot(ray.direction);
-    let c = oc.dot(oc) - radius * radius;
-    let discriminant = b * b - 4.0 * a * c;
-    discriminant > 0.0
 }

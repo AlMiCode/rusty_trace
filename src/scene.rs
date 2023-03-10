@@ -1,14 +1,15 @@
-use super::gui::WindowDimensions;
-use super::shapes::Shape;
-use super::Camera;
-use super::{ray_colour, vec_to_rgb, Ray};
+use crate::shapes::ShapeEnum;
+
+use crate::gui::WindowDimensions;
+use crate::Camera;
+use crate::{ray_colour, vec_to_rgb, Ray};
 
 use image::Rgb;
 
 pub struct Scene {
     camera: Camera,
     dimensions: WindowDimensions,
-    shapes: Vec<Shape>,
+    shapes: Vec<ShapeEnum>,
 }
 
 impl Scene {
@@ -20,8 +21,11 @@ impl Scene {
         }
     }
 
+    pub fn add_shape(&mut self, shape: ShapeEnum) {
+        self.shapes.push(shape);
+    }
+
     pub fn render(&mut self, buffer: &mut [u8], pitch: usize) {
-        // this just to test the gui
         for j in 0..self.dimensions.height {
             for i in 0..self.dimensions.width {
                 let u: f64 = i as f64 / (self.dimensions.width - 1) as f64;
@@ -33,7 +37,7 @@ impl Scene {
                         + v * self.camera.vertical
                         - self.camera.origin,
                 );
-                let rgb: Rgb<u8> = vec_to_rgb(ray_colour(r));
+                let rgb: Rgb<u8> = vec_to_rgb(ray_colour(r, &self.shapes));
                 let offset = j as usize * pitch + i as usize * 3;
                 buffer[offset] = rgb[0];
                 buffer[offset + 1] = rgb[1];
