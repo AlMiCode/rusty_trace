@@ -1,8 +1,11 @@
-use sdl2::pixels::Color;
-use sdl2::render::WindowCanvas;
-use sdl2::{Sdl, VideoSubsystem, EventPump};
+use crate::scene::Scene;
+
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
+use sdl2::pixels::{Color, PixelFormatEnum};
+use sdl2::rect::Rect;
+use sdl2::render::WindowCanvas;
+use sdl2::{EventPump, Sdl, VideoSubsystem};
 
 #[derive(Clone, Copy)]
 pub struct WindowDimensions {
@@ -17,22 +20,34 @@ pub struct Gui {
     event_pump: EventPump,
     canvas: WindowCanvas,
     dimensions: WindowDimensions,
+    scene: Option<Scene>,
     should_close: bool,
 }
 
 impl Gui {
     pub fn init(dimensions: WindowDimensions, title: &str) -> Result<Gui, String> {
-        // Why not just create sdl_context here?
         let context = sdl2::init()?;
-
         let video = context.video()?;
         let event_pump = context.event_pump()?;
-        let window = video.window(title, dimensions.width, dimensions.height)
+        let window = video
+            .window(title, dimensions.width, dimensions.height)
             .position_centered()
             .build()
             .map_err(|e| e.to_string())?;
         let canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
-        Ok(Gui { context, video, event_pump, canvas, dimensions, should_close: false })
+        Ok(Gui {
+            context,
+            video,
+            event_pump,
+            canvas,
+            dimensions,
+            should_close: false,
+            scene: None,
+        })
+    }
+
+    pub fn set_scene(&mut self, scene: Scene) {
+        self.scene = Some(scene);
     }
 
     pub fn mainloop(&mut self) {
@@ -40,17 +55,43 @@ impl Gui {
             // poll events
             for event in self.event_pump.poll_iter() {
                 match event {
-                    Event::Quit {..} |
-                    Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+                    Event::Quit { .. }
+                    | Event::KeyDown {
+                        keycode: Some(Keycode::Escape),
+                        ..
+                    } => {
                         self.should_close = true;
                         break 'main;
-                    },
+                    }
                     _ => {}
                 }
             }
 
             self.canvas.set_draw_color(Color::WHITE);
             self.canvas.clear();
+
+            if let Some(scene) = self.scene.as_mut() {
+                // Ill move the texture fields to a field in Gui in the future
+                let texture_creator = self.canvas.texture_creator();
+                let mut texture = texture_creator.create_texture_streaming(PixelFormatEnum::RGB24, 256, 256).unwrap();
+                // texture.update(None, pixelbuf, 3).unwrap();
+                texture.with_lock(None, | buffer: &mut [u8], pitch: usize | {
+                    scene.render(buffer, pitch);
+                }).unwrap();
+                self.canvas
+                    .copy(
+                        &texture,
+                        None,
+                        Some(Rect::new(
+                            0,
+                            0,
+                            self.dimensions.width,
+                            self.dimensions.height,
+                        )),
+                    )
+                    .unwrap();
+            }
+
             self.canvas.present();
         }
     }
