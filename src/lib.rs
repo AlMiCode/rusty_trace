@@ -20,7 +20,7 @@ pub fn render(image: &mut RgbImage, camera: &Camera, scene: &HittableVec, backgr
             let u = x as f64 / (width - 1) as f64;
             let v = y as f64 / (height - 1) as f64;
             let r = camera.get_ray(u, v);
-            let pixel: Rgb<u8> = vec_to_rgb(cast_ray(r, scene, background, 32));
+            let pixel: Rgb<u8> = vec_to_rgb(gamma_correction(cast_ray(r, scene, background, 32)));
             image.put_pixel(x, height - y - 1, pixel);
         }
     }
@@ -57,6 +57,10 @@ pub fn cast_ray(ray: Ray, hittable: &dyn Hittable, background: Colour, depth: u3
     } else {
         background
     }
+}
+
+fn gamma_correction(c: Colour) -> Colour {
+    Colour::new(c.x.sqrt(), c.y.sqrt(), c.z.sqrt())
 }
 
 pub fn vec_to_rgb(vec: Colour) -> Rgb<u8> {
