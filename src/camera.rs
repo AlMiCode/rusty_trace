@@ -1,3 +1,5 @@
+use crate::{Ray, Point3, Vector3};
+
 pub struct Camera {
     pub viewport_width: f64,
     pub viewport_height: f64,
@@ -6,6 +8,15 @@ pub struct Camera {
     pub horizontal: Vector3,
     pub vertical: Vector3,
     pub lower_left_corner: Point3,
+}
+
+impl Camera {
+    pub fn get_ray(&self, u: f64, v: f64) -> Ray {
+        Ray::new(
+            self.origin,
+            self.lower_left_corner + u * self.horizontal + v * self.vertical - self.origin,
+        )
+    }
 }
 
 impl Default for Camera {
