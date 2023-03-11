@@ -18,7 +18,7 @@ pub fn render(image: &mut RgbImage, camera: &Camera, scene: &HittableVec) {
             let u = x as f64 / (width - 1) as f64;
             let v = y as f64 / (height - 1) as f64;
             let r = camera.get_ray(u, v);
-            let pixel: Rgb<u8> = vec_to_rgb(ray_colour(r, scene));
+            let pixel: Rgb<u8> = vec_to_rgb(cast_ray(r, scene));
             image.put_pixel(x, height - y - 1, pixel);
         }
     }
@@ -38,8 +38,8 @@ impl Ray {
     }
 }
 
-pub fn ray_colour(ray: Ray, hit_vec: &HittableVec) -> Colour {
-    let t = hit_vec.hit(&ray);
+pub fn cast_ray(ray: Ray, hittable: &dyn Hittable) -> Colour {
+    let t = hittable.hit(&ray);
     if t > 0.0 {
         let normal_vec = (ray.at(t) - point3(0.0,0.0,-1.0)).normalize();
         0.5 * (normal_vec + Vector3::new(1.0, 1.0, 1.0))
