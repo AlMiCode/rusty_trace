@@ -1,11 +1,11 @@
-use crate::scene::Scene;
-
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::rect::Rect;
 use sdl2::render::WindowCanvas;
 use sdl2::{EventPump, Sdl, VideoSubsystem};
+
+use image::RgbImage;
 
 #[derive(Clone, Copy)]
 pub struct WindowDimensions {
@@ -20,7 +20,7 @@ pub struct Gui {
     event_pump: EventPump,
     canvas: WindowCanvas,
     dimensions: WindowDimensions,
-    scene: Option<Scene>,
+    image: Option<RgbImage>,
     should_close: bool,
 }
 
@@ -42,12 +42,12 @@ impl Gui {
             canvas,
             dimensions,
             should_close: false,
-            scene: None,
+            image: None,
         })
     }
 
-    pub fn set_scene(&mut self, scene: Scene) {
-        self.scene = Some(scene);
+    pub fn set_image(&mut self, scene: RgbImage) {
+        self.image = Some(scene);
     }
 
     pub fn mainloop(&mut self) -> Result<(), String> {
@@ -79,9 +79,9 @@ impl Gui {
             self.canvas.set_draw_color(Color::WHITE);
             self.canvas.clear();
 
-            if let Some(scene) = self.scene.as_mut() {
-                texture.with_lock(None, |buffer: &mut [u8], pitch: usize| {
-                    scene.render(buffer, pitch);
+            if let Some(image) = self.image.as_ref() {
+                texture.with_lock(None, |buffer: &mut [u8], _pitch: usize| {
+                    buffer.clone_from_slice(image.as_raw().as_slice());
                 })?;
                 self.canvas.copy(
                     &texture,
@@ -98,5 +98,10 @@ impl Gui {
             self.canvas.present();
         }
         Ok(())
+    }
+
+    pub fn show_image(&mut self, image: RgbImage) -> Result<(), String> {
+        self.set_image(image);
+        self.mainloop()
     }
 }

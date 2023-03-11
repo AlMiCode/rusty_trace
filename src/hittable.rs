@@ -5,6 +5,20 @@ pub trait Hittable{
     fn hit(&self, ray: &Ray) -> f64;
 }
 
+pub type HittableVec = Vec<Box<dyn Hittable>>;
+
+impl Hittable for HittableVec {
+    fn hit(&self, ray: &Ray) -> f64 {
+       let mut t = -1.0;
+        for shape in self {
+            let t1 = shape.hit(&ray);
+            if t1 == -1.0 { continue }
+            if t == -1.0 { t = t1 } else if t1 < t { t = t1 }
+        }
+        t
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct Sphere {
     center: Point3,
