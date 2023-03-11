@@ -1,9 +1,12 @@
+use std::rc::Rc;
+
 use cgmath::point3;
 use image::RgbImage;
 use rusty_trace::camera::Camera;
 use rusty_trace::gui::{Gui, WindowDimensions};
 use rusty_trace::hittable::{Sphere, HittableVec};
-use rusty_trace::render;
+use rusty_trace::{render, Colour};
+use rusty_trace::material::Lambertian;
 
 static WIN_DIMENSIONS: WindowDimensions = WindowDimensions {
     width: 1280,
@@ -18,9 +21,11 @@ fn main() -> Result<(), String> {
     let camera = Camera::from_aspect_ratio(width as f64 / height as f64);
 
     let mut scene = HittableVec::new();
-    scene.push(Box::new(Sphere::new(point3(0.0, 0.0, -1.0), 0.5)));
+    let material = Rc::new(Lambertian { albedo: Colour::new(0.8, 0.8, 0.8) });
+    scene.push(Box::new(Sphere::new(point3(0.0, 0.0, -1.0), 0.5, material.clone())));
+    scene.push(Box::new(Sphere::new(point3(0.0, -21.0, -1.0), 20.0, material)));
 
-    render(&mut image, &camera, &scene);
+    render(&mut image, &camera, &scene, Colour::new(0.8, 0.8, 0.9));
 
     // initialize gui object
     let mut gui = Gui::init(WIN_DIMENSIONS, WIN_TITLE)?;

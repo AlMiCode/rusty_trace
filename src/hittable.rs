@@ -1,47 +1,96 @@
+use std::rc::Rc;
+
 use cgmath::InnerSpace;
-use crate::{Point3, Ray};
+use crate::{Point3, Ray, Vector3};
+use crate::material::Material;
+
+pub struct HitRecord {
+    pub point: Point3,
+    pub normal: Vector3,
+    pub distance: f64,
+    pub uv: (f64, f64),
+    pub front_face: bool,
+    pub material: Rc<dyn Material>
+}
 
 pub trait Hittable{
-    fn hit(&self, ray: &Ray) -> f64;
+    fn hit_bounded(&self, ray: &Ray, min_dist: f64, max_dist: f64) -> Option<HitRecord>;
+    fn hit(&self, ray: &Ray) -> Option<HitRecord> {
+        self.hit_bounded(ray, f64::EPSILON, f64::INFINITY)
+    }
 }
 
 pub type HittableVec = Vec<Box<dyn Hittable>>;
 
 impl Hittable for HittableVec {
-    fn hit(&self, ray: &Ray) -> f64 {
-       let mut t = -1.0;
+    fn hit_bounded(&self, ray: &Ray, min_dist: f64, max_dist: f64) -> Option<HitRecord> {
+        let mut result = None;
+        let mut closest_dist = f64::INFINITY;
         for shape in self {
-            let t1 = shape.hit(&ray);
-            if t1 == -1.0 { continue }
-            if t == -1.0 { t = t1 } else if t1 < t { t = t1 }
+            let hit = shape.hit_bounded(ray, min_dist, max_dist);
+            if let Some(hit) = hit {
+                if hit.distance < closest_dist {
+                    closest_dist = hit.distance;
+                    result = Some(hit);
+                }
+            }
         }
-        t
+        result
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone)]
 pub struct Sphere {
     center: Point3,
     radius: f64,
+    material: Rc<dyn Material>
 }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: f64) -> Self {
-        Sphere { center, radius }
+    pub fn new(center: Point3, radius: f64, material: Rc<dyn Material>) -> Self {
+        Sphere { center, radius, material }
+    }
+
+    fn get_uv(normal: &Vector3) -> (f64, f64) {
+        let pi = std::f64::consts::PI;
+        let phi = (-normal.z).atan2(normal.x) + pi;
+        let u = phi / (2.0 * pi);
+        let v = normal.y.asin() / pi + 0.5;
+        (u, v)
     }
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray: &Ray) -> f64 {
+    fn hit_bounded(&self, ray: &Ray, min_dist: f64, max_dist: f64) -> Option<HitRecord> {
         let oc = ray.origin - self.center;
         let a = ray.direction.dot(ray.direction);
-        let b = 2.0 * oc.dot(ray.direction);
+        let half_b = oc.dot(ray.direction);
         let c = oc.dot(oc) - self.radius * self.radius;
-        let discriminant = b * b - 4.0 * a * c;
+        let discriminant = half_b * half_b - a * c;
         if discriminant < 0.0 {
-            -1.0
-        } else {
-            ( -b - discriminant.sqrt() ) / 2.0*a
+            return None;
         }
+        let sqrt_d = discriminant.sqrt();
+        let mut root = (-half_b - sqrt_d) / a;
+        if root < min_dist || root > max_dist {
+            root = (-half_b + sqrt_d) / a;
+            if root < min_dist || root > max_dist {
+                return None;
+            }
+        }
+        let point = ray.at(root);
+        let outward_normal = (point - self.center) / self.radius;
+        let front_face = ray.direction.dot(outward_normal) < 0.0;
+        let normal = if front_face { outward_normal } else { -outward_normal };
+        let result = HitRecord {
+            point, 
+            normal, 
+            distance: root,
+            front_face,
+            uv: Sphere::get_uv(&outward_normal),
+            material: self.material.clone()
+        };
+
+        Some(result)
     }
 }

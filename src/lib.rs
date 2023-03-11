@@ -1,24 +1,26 @@
 use camera::Camera;
-use cgmath::{vec3, InnerSpace, point3};
-use image::{Rgb, RgbImage};
+use cgmath::{ElementWise, InnerSpace};
 use hittable::{Hittable, HittableVec};
+use image::{Rgb, RgbImage};
+use rand::Rng;
 
+pub mod camera;
 pub mod gui;
 pub mod hittable;
-pub mod camera;
+pub mod material;
 
 pub type Point3 = cgmath::Point3<f64>;
 pub type Vector3 = cgmath::Vector3<f64>;
 pub type Colour = cgmath::Vector3<f64>;
 
-pub fn render(image: &mut RgbImage, camera: &Camera, scene: &HittableVec) {
+pub fn render(image: &mut RgbImage, camera: &Camera, scene: &HittableVec, background: Colour) {
     let (width, height) = image.dimensions();
     for y in 0..height {
         for x in 0..width {
             let u = x as f64 / (width - 1) as f64;
             let v = y as f64 / (height - 1) as f64;
             let r = camera.get_ray(u, v);
-            let pixel: Rgb<u8> = vec_to_rgb(cast_ray(r, scene));
+            let pixel: Rgb<u8> = vec_to_rgb(cast_ray(r, scene, background, 32));
             image.put_pixel(x, height - y - 1, pixel);
         }
     }
@@ -38,18 +40,47 @@ impl Ray {
     }
 }
 
-pub fn cast_ray(ray: Ray, hittable: &dyn Hittable) -> Colour {
-    let t = hittable.hit(&ray);
-    if t > 0.0 {
-        let normal_vec = (ray.at(t) - point3(0.0,0.0,-1.0)).normalize();
-        0.5 * (normal_vec + Vector3::new(1.0, 1.0, 1.0))
+pub fn cast_ray(ray: Ray, hittable: &dyn Hittable, background: Colour, depth: u32) -> Colour {
+    if depth == 0 {
+        return Colour::new(0.0, 0.0, 0.0);
+    }
+    if let Some(hit) = hittable.hit(&ray) {
+        match hit.material.scatter(&ray, &hit) {
+            None => Colour::new(0.0, 0.0, 0.0),
+            Some(scattered) => scattered.attenuation.mul_element_wise(cast_ray(
+                scattered.ray,
+                hittable,
+                background,
+                depth - 1,
+            )),
+        }
     } else {
-        let unit_dir = ray.direction.normalize();
-        let t = 0.5 * (unit_dir.y + 1.0);
-        (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0)
+        background
     }
 }
 
 pub fn vec_to_rgb(vec: Colour) -> Rgb<u8> {
     Rgb(vec.map(|n| (n.clamp(0.0, 1.0) * 255.0) as u8).into())
+}
+
+fn random_vec() -> Vector3 {
+    let mut rng = rand::thread_rng();
+    Vector3::new(rng.gen(), rng.gen(), rng.gen())
+}
+
+fn random_vec_in_sphere() -> Vector3 {
+    loop {
+        let vec = random_vec();
+        if vec.dot(vec) < 1.0 {
+            return vec.normalize();
+        }
+    }
+}
+fn random_vec_in_hemisphere(normal: Vector3) -> Vector3 {
+    let vec = random_vec_in_sphere();
+    if vec.dot(normal) > 0.0 {
+        vec
+    } else {
+        -vec
+    }
 }
