@@ -46,8 +46,8 @@ impl Gui {
         })
     }
 
-    pub fn set_image(&mut self, scene: RgbImage) {
-        self.image = Some(scene);
+    pub fn set_image(&mut self, image: RgbImage) {
+        self.image = Some(image);
     }
 
     pub fn mainloop(&mut self) -> Result<(), String> {
