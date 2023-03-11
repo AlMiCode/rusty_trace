@@ -1,28 +1,24 @@
 use cgmath::InnerSpace;
-use crate::{Float, Point3, Ray};
+use crate::{Point3, Ray};
 
-pub trait HitObject {
+pub trait Hittable{
     fn hit(&self, ray: &Ray) -> f64;
-}
-
-pub enum ShapeEnum {
-    Sphere(Sphere),
 }
 
 #[derive(Clone, Copy, Debug)]
 pub struct Sphere {
     center: Point3,
-    radius: Float,
+    radius: f64,
 }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: Float) -> Sphere {
+    pub fn new(center: Point3, radius: f64) -> Self {
         Sphere { center, radius }
     }
 }
 
-impl HitObject for Sphere {
-    fn hit(&self, ray: &Ray) -> Float {
+impl Hittable for Sphere {
+    fn hit(&self, ray: &Ray) -> f64 {
         let oc = ray.origin - self.center;
         let a = ray.direction.dot(ray.direction);
         let b = 2.0 * oc.dot(ray.direction);
