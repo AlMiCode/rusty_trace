@@ -1,8 +1,10 @@
 use camera::Camera;
-use cgmath::{ElementWise, InnerSpace};
+use cgmath::{ElementWise, InnerSpace, Zero};
 use hittable::{Hittable, HittableVec};
 use image::{Rgb, RgbImage};
 use rand::Rng;
+
+use std::io::Write;
 
 pub mod camera;
 pub mod gui;
@@ -13,16 +15,22 @@ pub type Point3 = cgmath::Point3<f64>;
 pub type Vector3 = cgmath::Vector3<f64>;
 pub type Colour = cgmath::Vector3<f64>;
 
-pub fn render(image: &mut RgbImage, camera: &Camera, scene: &HittableVec, background: Colour) {
+pub fn render(image: &mut RgbImage, camera: &Camera, scene: &HittableVec, background: Colour, sample_count: u32) {
     let (width, height) = image.dimensions();
     for y in 0..height {
         for x in 0..width {
-            let u = x as f64 / (width - 1) as f64;
-            let v = y as f64 / (height - 1) as f64;
-            let r = camera.get_ray(u, v);
-            let pixel: Rgb<u8> = vec_to_rgb(gamma_correction(cast_ray(r, scene, background, 32)));
+            let mut colour = Colour::zero();
+            for _s in 0..sample_count {
+                let u = x as f64 / (width - 1) as f64;
+                let v = y as f64 / (height - 1) as f64;
+                let r = camera.get_ray(u, v);
+                
+                colour += cast_ray(r, scene, background, 30)
+            }
+            let pixel: Rgb<u8> = vec_to_rgb(gamma_correction(colour / sample_count as f64));
             image.put_pixel(x, height - y - 1, pixel);
         }
+        print!("\r{}/{} done", y+1, height); std::io::stdout().flush();
     }
 }
 

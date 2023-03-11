@@ -9,9 +9,9 @@ use rusty_trace::{render, Colour};
 use rusty_trace::material::Lambertian;
 
 static WIN_DIMENSIONS: WindowDimensions = WindowDimensions {
-    width: 1280,
-    height: 720,
-};
+    width: 640,
+    height: 360,
+}; // small resolution to make debug rendering faster
 static WIN_TITLE: &str = "Rusty Trace";
 
 fn main() -> Result<(), String> {
@@ -23,9 +23,9 @@ fn main() -> Result<(), String> {
     let mut scene = HittableVec::new();
     let material = Rc::new(Lambertian { albedo: Colour::new(0.8, 0.8, 0.8) });
     scene.push(Box::new(Sphere::new(point3(0.0, 0.0, -1.0), 0.5, material.clone())));
-    scene.push(Box::new(Sphere::new(point3(0.0, -21.0, -1.0), 20.0, material)));
+    scene.push(Box::new(Sphere::new(point3(0.0, -20.5, -1.0), 20.0, material)));
 
-    render(&mut image, &camera, &scene, Colour::new(0.8, 0.8, 0.9));
+    render(&mut image, &camera, &scene, Colour::new(0.8, 0.8, 0.9), 50);
 
     // initialize gui object
     let mut gui = Gui::init(WIN_DIMENSIONS, WIN_TITLE)?;
