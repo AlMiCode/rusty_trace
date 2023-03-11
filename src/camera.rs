@@ -11,18 +11,9 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn get_ray(&self, u: f64, v: f64) -> Ray {
-        Ray::new(
-            self.origin,
-            self.lower_left_corner + u * self.horizontal + v * self.vertical - self.origin,
-        )
-    }
-}
-
-impl Default for Camera {
-    fn default() -> Self {
+    pub fn from_aspect_ratio(aspect_ratio: f64) -> Self {
         let viewport_height = 2.0;
-        let viewport_width = (1280.0 / 720.0) * 2.0;
+        let viewport_width = aspect_ratio * 2.0;
         let focal_length = 1.0;
         let origin = Point3::new(0.0, 0.0, 0.0);
         let horizontal = Vector3::new(viewport_width, 0.0, 0.0);
@@ -38,5 +29,18 @@ impl Default for Camera {
             vertical,
             lower_left_corner,
         }
+    }
+
+    pub fn get_ray(&self, u: f64, v: f64) -> Ray {
+        Ray::new(
+            self.origin,
+            self.lower_left_corner + u * self.horizontal + v * self.vertical - self.origin,
+        )
+    }
+}
+
+impl Default for Camera {
+    fn default() -> Self {
+        Camera::from_aspect_ratio(1280.0 / 720.0)
     }
 }
