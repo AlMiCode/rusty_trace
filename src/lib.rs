@@ -1,20 +1,19 @@
 use cgmath::{vec3, InnerSpace};
 use image::Rgb;
-use shapes::{ShapeEnum, HitObject};
+use shapes::Hittable;
 
 pub mod gui;
 pub mod scene;
 pub mod shapes;
 
-pub type Float = f64;
-pub type Point3 = cgmath::Point3<Float>;
-pub type Vector3 = cgmath::Vector3<Float>;
-pub type Colour = cgmath::Vector3<Float>;
+pub type Point3 = cgmath::Point3<f64>;
+pub type Vector3 = cgmath::Vector3<f64>;
+pub type Colour = cgmath::Vector3<f64>;
 
 pub struct Camera {
-    pub viewport_width: Float,
-    pub viewport_height: Float,
-    pub focal_length: Float,
+    pub viewport_width: f64,
+    pub viewport_height: f64,
+    pub focal_length: f64,
     pub origin: Point3,
     pub horizontal: Vector3,
     pub vertical: Vector3,
@@ -52,17 +51,15 @@ impl Ray {
     pub fn new(origin: Point3, direction: Vector3) -> Self {
         Ray { origin, direction }
     }
-    pub fn at(&self, t: Float) -> Point3 {
+    pub fn at(&self, t: f64) -> Point3 {
         self.origin + self.direction * t
     }
 }
 
-pub fn ray_colour(ray: Ray, hittable: &Vec<ShapeEnum>) -> Colour {
+pub fn ray_colour(ray: Ray, hittable: &Vec<Box<dyn Hittable>>) -> Colour {
     let mut t = -1.0;
     for shape in hittable {
-        let t1 = match shape {
-            ShapeEnum::Sphere(s) => s.hit(&ray),
-        };
+        let t1 = shape.hit(&ray);
         if t1 == -1.0 { continue }
         if t == -1.0 { t = t1 } else if t1 < t { t = t1 }
     }
