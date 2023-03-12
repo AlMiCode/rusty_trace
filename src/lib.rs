@@ -52,7 +52,7 @@ pub fn cast_ray(ray: Ray, hittable: &dyn Hittable, background: Colour, depth: u3
     if depth == 0 {
         return Colour::new(0.0, 0.0, 0.0);
     }
-    if let Some(hit) = hittable.hit(&ray) {
+    if let Some(hit) = hittable.hit_bounded(&ray, 0.0001, f64::INFINITY) {
         match hit.material.scatter(&ray, &hit) {
             None => Colour::new(0.0, 0.0, 0.0),
             Some(scattered) => scattered.attenuation.mul_element_wise(cast_ray(
