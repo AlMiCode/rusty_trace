@@ -5,7 +5,7 @@ use image::{Rgb, RgbImage};
 use rand::Rng;
 
 pub mod camera;
-pub mod gui;
+pub mod imgui_gui;
 pub mod hittable;
 pub mod material;
 
