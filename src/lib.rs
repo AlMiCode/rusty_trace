@@ -30,7 +30,10 @@ pub fn render(image: &mut RgbImage, camera: &Camera, scene: &HittableVec, backgr
             let pixel: Rgb<u8> = vec_to_rgb(gamma_correction(colour / sample_count as f64));
             image.put_pixel(x, height - y - 1, pixel);
         }
-        print!("\r{}/{} done", y+1, height); std::io::stdout().flush();
+        print!("\r{}/{} done", y+1, height); 
+        if let Err(_e) = std::io::stdout().flush() {
+            panic!("could not flush stdout");
+        }
     }
 }
 
@@ -86,13 +89,5 @@ fn random_vec_in_sphere() -> Vector3 {
         if vec.dot(vec) < 1.0 {
             return vec.normalize();
         }
-    }
-}
-fn random_vec_in_hemisphere(normal: Vector3) -> Vector3 {
-    let vec = random_vec_in_sphere();
-    if vec.dot(normal) > 0.0 {
-        vec
-    } else {
-        -vec
     }
 }
