@@ -28,6 +28,8 @@ fn main() -> Result<(), String> {
     render(&mut image, &camera, &scene, Colour::new(0.8, 0.8, 0.9), 50);
 
     let mut gui = Gui::default();
+    gui.add_image(image.clone())?;
+    gui.add_image(image.clone())?;
     gui.add_image(image)?;
     start(gui, WIN_DIMENSIONS, WIN_TITLE).unwrap();
     Ok(())
