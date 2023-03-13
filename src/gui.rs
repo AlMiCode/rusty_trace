@@ -1,5 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+use crate::renderer::Renderer;
+
 use std::sync::mpsc;
 use std::thread::JoinHandle;
 
@@ -64,6 +66,7 @@ pub struct Gui {
     threads: Vec<(JoinHandle<()>, mpsc::SyncSender<egui::Context>)>,
     on_done_tx: mpsc::SyncSender<()>,
     on_done_rc: mpsc::Receiver<()>,
+    renderer: Renderer,
 }
 
 impl Default for Gui {
@@ -75,6 +78,7 @@ impl Default for Gui {
             threads,
             on_done_tx,
             on_done_rc,
+            renderer: Renderer::new(1280f64/720f64)
         }
     }
 }
@@ -110,14 +114,16 @@ pub fn start(gui: Gui, dimensions: WindowDimensions, title: &str) -> Result<(), 
 impl eframe::App for Gui {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            for (_handle, show_tx) in &self.threads {
-                let _ = show_tx.send(ctx.clone());
+            if ui.button("Render").clicked() {
+                self.add_image(self.renderer.render((640, 360)));
             }
-
-            for _ in 0..self.threads.len() {
-                let _ = self.on_done_rc.recv();
-            }
-
         });
+        for (_handle, show_tx) in &self.threads {
+            let _ = show_tx.send(ctx.clone());
+        }
+
+        for _ in 0..self.threads.len() {
+            let _ = self.on_done_rc.recv();
+        }
     }
 }

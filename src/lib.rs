@@ -10,6 +10,7 @@ pub mod camera;
 pub mod gui;
 pub mod hittable;
 pub mod material;
+pub mod renderer;
 
 pub type Point3 = cgmath::Point3<f64>;
 pub type Vector3 = cgmath::Vector3<f64>;
