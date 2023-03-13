@@ -7,7 +7,7 @@ use rand::Rng;
 use std::io::Write;
 
 pub mod camera;
-pub mod imgui_gui;
+pub mod gui;
 pub mod hittable;
 pub mod material;
 
