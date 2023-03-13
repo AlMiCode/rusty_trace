@@ -3,7 +3,7 @@ use std::rc::Rc;
 use cgmath::point3;
 use image::RgbImage;
 use rusty_trace::camera::Camera;
-use rusty_trace::gui::{Gui, WindowDimensions};
+use rusty_trace::gui::{start, Gui, WindowDimensions};
 use rusty_trace::hittable::{Sphere, HittableVec};
 use rusty_trace::{render, Colour};
 use rusty_trace::material::Lambertian;
@@ -27,7 +27,8 @@ fn main() -> Result<(), String> {
 
     render(&mut image, &camera, &scene, Colour::new(0.8, 0.8, 0.9), 50);
 
-    // initialize gui object
-    let mut gui = Gui::init(WIN_DIMENSIONS, WIN_TITLE)?;
-    gui.show_image(image)
+    let mut gui = Gui::default();
+    gui.add_image(image)?;
+    start(gui, WIN_DIMENSIONS, WIN_TITLE).unwrap();
+    Ok(())
 }

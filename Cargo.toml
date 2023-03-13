@@ -7,7 +7,9 @@ edition = "2021"
 
 [dependencies]
 cgmath = "0.18.0"
-sdl2 = "0.35.2"
-image = "0.24.5"
+image = { version = "0.24.5", features = ["jpeg", "png"] }
 anyhow = "1.0.69"
 rand = "0.8.5"
+egui = "0.21.0"
+eframe = "0.21.3"
+egui_extras = { version = "0.21.0", features = ["image"] }
