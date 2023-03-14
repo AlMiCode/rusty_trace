@@ -1,8 +1,8 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
-use cgmath::InnerSpace;
-use crate::{Point3, Ray, Vector3};
 use crate::material::Material;
+use crate::{Point3, Ray, Vector3};
+use cgmath::InnerSpace;
 
 pub struct HitRecord {
     pub point: Point3,
@@ -10,17 +10,17 @@ pub struct HitRecord {
     pub distance: f64,
     pub uv: (f64, f64),
     pub front_face: bool,
-    pub material: Rc<dyn Material>
+    pub material: Arc<dyn Material + Sync + Send>,
 }
 
-pub trait Hittable{
+pub trait Hittable {
     fn hit_bounded(&self, ray: &Ray, min_dist: f64, max_dist: f64) -> Option<HitRecord>;
     fn hit(&self, ray: &Ray) -> Option<HitRecord> {
         self.hit_bounded(ray, f64::EPSILON, f64::INFINITY)
     }
 }
 
-pub type HittableVec = Vec<Box<dyn Hittable>>;
+pub type HittableVec = Vec<Box<dyn Hittable + Sync>>;
 
 impl Hittable for HittableVec {
     fn hit_bounded(&self, ray: &Ray, min_dist: f64, max_dist: f64) -> Option<HitRecord> {
@@ -43,12 +43,16 @@ impl Hittable for HittableVec {
 pub struct Sphere {
     center: Point3,
     radius: f64,
-    material: Rc<dyn Material>
+    material: Arc<dyn Material + Sync + Send>,
 }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: f64, material: Rc<dyn Material>) -> Self {
-        Sphere { center, radius, material }
+    pub fn new(center: Point3, radius: f64, material: Arc<dyn Material + Sync + Send>) -> Self {
+        Sphere {
+            center,
+            radius,
+            material,
+        }
     }
 
     fn get_uv(normal: &Vector3) -> (f64, f64) {
@@ -81,14 +85,18 @@ impl Hittable for Sphere {
         let point = ray.at(root);
         let outward_normal = (point - self.center) / self.radius;
         let front_face = ray.direction.dot(outward_normal) < 0.0;
-        let normal = if front_face { outward_normal } else { -outward_normal };
+        let normal = if front_face {
+            outward_normal
+        } else {
+            -outward_normal
+        };
         let result = HitRecord {
-            point, 
-            normal, 
+            point,
+            normal,
             distance: root,
             front_face,
             uv: Sphere::get_uv(&outward_normal),
-            material: self.material.clone()
+            material: self.material.clone(),
         };
 
         Some(result)

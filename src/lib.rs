@@ -16,7 +16,13 @@ pub type Point3 = cgmath::Point3<f64>;
 pub type Vector3 = cgmath::Vector3<f64>;
 pub type Colour = cgmath::Vector3<f64>;
 
-pub fn render(image: &mut RgbImage, camera: &Camera, scene: &HittableVec, background: Colour, sample_count: u32) {
+pub fn render(
+    image: &mut RgbImage,
+    camera: &Camera,
+    scene: &HittableVec,
+    background: Colour,
+    sample_count: u32,
+) {
     let (width, height) = image.dimensions();
     for y in 0..height {
         for x in 0..width {
@@ -25,13 +31,13 @@ pub fn render(image: &mut RgbImage, camera: &Camera, scene: &HittableVec, backgr
                 let u = x as f64 / (width - 1) as f64;
                 let v = y as f64 / (height - 1) as f64;
                 let r = camera.get_ray(u, v);
-                
+
                 colour += cast_ray(r, scene, background, 30)
             }
             let pixel: Rgb<u8> = vec_to_rgb(gamma_correction(colour / sample_count as f64));
             image.put_pixel(x, height - y - 1, pixel);
         }
-        print!("\r{}/{} done", y+1, height); 
+        print!("\r{}/{} done", y + 1, height);
         if let Err(_e) = std::io::stdout().flush() {
             panic!("could not flush stdout");
         }

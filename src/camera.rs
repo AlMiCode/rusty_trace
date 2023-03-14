@@ -1,4 +1,4 @@
-use crate::{Ray, Point3, Vector3};
+use crate::{Point3, Ray, Vector3};
 
 pub struct Camera {
     pub viewport_width: f64,
