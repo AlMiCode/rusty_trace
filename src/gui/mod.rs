@@ -44,7 +44,7 @@ impl eframe::App for Gui {
         egui::CentralPanel::default().show(ctx, |ui| {
             if ui.button("Render").clicked() {
                 // implement render function
-                self.elements.push(Box::new(ImageGuiElement::new(self.renderer.render((640,360)))));
+                self.elements.push(Box::new(ImageGuiElement::new(self.elements.len(), self.renderer.render((640,360)))));
             }
         });
         for e in &mut self.elements {

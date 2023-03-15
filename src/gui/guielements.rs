@@ -12,8 +12,8 @@ pub struct ImageGuiElement {
 }
 
 impl ImageGuiElement {
-    pub fn new(image: RgbImage) -> Self {
-        let title = String::from("Render");
+    pub fn new(window_id: usize, image: RgbImage) -> Self {
+        let title = format!("Render {window_id}");
         Self {
             title,
             image: RetainedImage::from_color_image(
