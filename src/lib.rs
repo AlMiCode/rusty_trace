@@ -64,14 +64,15 @@ pub fn cast_ray(ray: Ray, hittable: &dyn Hittable, background: Colour, depth: u3
         return Colour::new(0.0, 0.0, 0.0);
     }
     if let Some(hit) = hittable.hit_bounded(&ray, 0.0001, f64::INFINITY) {
+        let emitted = hit.material.emit(hit.uv.0, hit.uv.1);
         match hit.material.scatter(&ray, &hit) {
-            None => Colour::new(0.0, 0.0, 0.0),
+            None => emitted,
             Some(scattered) => scattered.attenuation.mul_element_wise(cast_ray(
                 scattered.ray,
                 hittable,
                 background,
                 depth - 1,
-            )),
+            )) + emitted,
         }
     } else {
         background
@@ -90,9 +91,12 @@ pub fn rgb_to_vec(rgb: &Rgb<u8>) -> Colour {
     Colour::from(rgb.0.map(|n| n as f64 / 255.0))
 }
 
+fn random_f64() -> f64 {
+    rand::thread_rng().gen()
+}
+
 fn random_vec() -> Vector3 {
-    let mut rng = rand::thread_rng();
-    Vector3::new(rng.gen(), rng.gen(), rng.gen())
+    Vector3::new(random_f64(), random_f64(), random_f64())
 }
 
 fn random_vec_in_sphere() -> Vector3 {

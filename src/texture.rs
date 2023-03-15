@@ -2,12 +2,12 @@ use image::RgbImage;
 
 use crate::{Colour, rgb_to_vec};
 
-trait Texture {
+pub trait Texture {
     fn colour_at(&self, u: f64, v: f64) -> Colour;
 }
 
 impl Texture for Colour {
-    fn colour_at(&self, u: f64, v: f64) -> Colour { self.clone() }
+    fn colour_at(&self, _u: f64, _v: f64) -> Colour { self.clone() }
 }
 
 impl Texture for RgbImage {
