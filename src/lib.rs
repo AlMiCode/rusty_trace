@@ -10,6 +10,7 @@ pub mod camera;
 pub mod gui;
 pub mod hittable;
 pub mod material;
+pub mod texture;
 pub mod renderer;
 
 pub type Point3 = cgmath::Point3<f64>;
@@ -83,6 +84,10 @@ fn gamma_correction(c: Colour) -> Colour {
 
 pub fn vec_to_rgb(vec: Colour) -> Rgb<u8> {
     Rgb(vec.map(|n| (n.clamp(0.0, 1.0) * 255.0) as u8).into())
+}
+
+pub fn rgb_to_vec(rgb: &Rgb<u8>) -> Colour {
+    Colour::from(rgb.0.map(|n| n as f64 / 255.0))
 }
 
 fn random_vec() -> Vector3 {
