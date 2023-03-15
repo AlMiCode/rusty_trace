@@ -55,7 +55,7 @@ impl Sphere {
         }
     }
 
-    fn get_uv(normal: &Vector3) -> (f64, f64) {
+    pub fn get_uv(normal: &Vector3) -> (f64, f64) {
         let pi = std::f64::consts::PI;
         let phi = (-normal.z).atan2(normal.x) + pi;
         let u = phi / (2.0 * pi);

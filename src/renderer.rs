@@ -49,7 +49,7 @@ impl Renderer {
             &mut image,
             &self.camera,
             &self.scene,
-            Colour::new(0.0, 0.0, 0.01),
+            Box::new(Colour::new(0.0, 0.0, 0.01)),
             50,
         );
         image
