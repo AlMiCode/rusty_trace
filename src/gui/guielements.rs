@@ -19,7 +19,7 @@ impl ImageGuiElement {
             image: RetainedImage::from_color_image(
                 "render",
                 ColorImage::from_rgb(
-                    [image.dimensions().0 as usize, image.dimensions().1 as usize],
+                    [image.width() as usize, image.height() as usize],
                     image.as_raw(),
                 ),
             ),
