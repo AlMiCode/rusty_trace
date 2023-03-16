@@ -110,3 +110,13 @@ fn random_vec_in_sphere() -> Vector3 {
         }
     }
 }
+
+fn random_vec_in_disc() -> Vector3 {
+    loop {
+        let mut vec = random_vec();
+        vec.z = 0.0;
+        if vec.magnitude2() < 1.0 {
+            return vec.normalize();
+        }
+    }
+}

@@ -72,10 +72,6 @@ impl eframe::App for Gui {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             if ui.button("Render").clicked() {
-<<<<<<< Updated upstream
-                // implement render function
-                self.elements.push(Box::new(ImageGuiElement::new(self.elements.len(), self.renderer.render((640,360)))));
-=======
                 let guielement = Box::new(ImageGuiElement::new(
                     self.elements.len(),
                     (640,360),
@@ -83,7 +79,6 @@ impl eframe::App for Gui {
                     0
                 ));
                 self.elements.push(guielement);
->>>>>>> Stashed changes
             }
         });
         for e in &mut self.elements {
