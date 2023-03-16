@@ -12,7 +12,8 @@ pub mod gui;
 pub mod hittable;
 pub mod material;
 pub mod texture;
-pub mod renderer;
+// pub mod renderer;
+pub mod scene;
 
 pub type Point3 = cgmath::Point3<f64>;
 pub type Vector3 = cgmath::Vector3<f64>;
@@ -22,7 +23,7 @@ pub fn render(
     image: &mut RgbImage,
     camera: &Camera,
     scene: &HittableVec,
-    background: Box<dyn Texture>,
+    background: &Box<dyn Texture + Send + Sync>,
     sample_count: u32,
 ) {
     let (width, height) = image.dimensions();
