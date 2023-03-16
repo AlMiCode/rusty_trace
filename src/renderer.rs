@@ -1,4 +1,4 @@
-use crate::camera::Camera;
+use crate::camera::{Camera, CameraSettings};
 use crate::hittable::{HittableVec, Sphere};
 use crate::material::{Dielectric, DiffuseLight, Lambertian, Metal};
 use crate::{render, Colour};
@@ -15,7 +15,7 @@ pub struct Renderer {
 
 impl Renderer {
     pub fn new(/*tmp*/ aspect_ratio: f64) -> Renderer {
-        let camera = Camera::from_aspect_ratio(aspect_ratio);
+        let camera = Camera::new(CameraSettings { look_from: point3(0.0, 0.5, 1.5), aspect_ratio, ..Default::default()});
         let mut scene = HittableVec::new();
         let lambert = Arc::new(Lambertian {
             albedo: Arc::new(Colour::new(0.5, 0.5, 0.8)),
