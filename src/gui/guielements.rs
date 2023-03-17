@@ -61,13 +61,13 @@ impl GuiElement for ImageGuiElement {
     }
 }
 
-pub struct SceneEditorGuiElement {
+pub struct SceneEditor {
     title: String,
     scene: Arc<RwLock<Scene>>,
     sub_elements: Vec<Box<dyn GuiElement>>,
 }
 
-impl SceneEditorGuiElement {
+impl SceneEditor {
     pub fn new(title: String, scene: Arc<RwLock<Scene>>) -> Self {
         Self {
             title,
@@ -77,7 +77,7 @@ impl SceneEditorGuiElement {
     }
 }
 
-impl GuiElement for SceneEditorGuiElement {
+impl GuiElement for SceneEditor {
     fn show(&mut self, ctx: &egui::Context) {
         let pos = egui::pos2(16.0, 128.0);
         let scene_clone = Arc::clone(&self.scene);

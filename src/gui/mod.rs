@@ -53,7 +53,7 @@ impl Default for Gui {
             lambert,
         )));
         let scene_arc = Arc::new(RwLock::new(scene));
-        let scene_editor = SceneEditorGuiElement::new(String::from("Scene editor"), scene_arc);
+        let scene_editor = SceneEditor::new(String::from("Scene editor"), scene_arc);
         Self {
             elements: vec![Box::new(scene_editor)],
         }
