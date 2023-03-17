@@ -18,12 +18,13 @@ pub struct ImageGuiElement {
 
 impl ImageGuiElement {
     pub fn new(
-        window_id: usize,
+        camera_id: usize,
+        render_id: usize,
         img_dimensions: (u32, u32),
         scene: &Arc<RwLock<Scene>>,
         cam_index: usize,
     ) -> Self {
-        let title = format!("Render {window_id}");
+        let title = format!("Render {render_id} for camera {camera_id}");
         let scene_clone = Arc::clone(scene);
         Self {
             title,
@@ -86,30 +87,29 @@ impl GuiElement for SceneEditor {
             .default_pos(pos)
             .show(ctx, |ui| {
                 let reader = scene_clone.read().unwrap();
-                if ui.button("Render").clicked() {
-                    let guielement = Box::new(ImageGuiElement::new(
-                        self.sub_elements.len(),
-                        (640, 360),
-                        &self.scene,
-                        0,
-                    ));
-                    self.sub_elements.push(guielement);
-                }
                 let cam_len = reader.cameras.len();
                 drop(reader);
                 for c in 0..cam_len {
+                    ui.label(format!("Camera {c}"));
+                    if ui.button("Render").clicked() {
+                        let guielement = Box::new(ImageGuiElement::new(
+                            c, self.sub_elements.len(),
+                            (640, 360),
+                            &self.scene,
+                            c,
+                        ));
+                        self.sub_elements.push(guielement);
+                    }
                     let reader = scene_clone.read().unwrap();
                     let mut fov: f64 = reader.cameras[c].settings.fov;
+                    ui.label("Fov:");
                     if ui.add(egui::DragValue::new(&mut fov)).changed() {
-                        println!("Changed");
                         drop(reader);
                         let mut writer = scene_clone.write().unwrap();
                         (*writer).cameras[c].settings.fov = fov;
-                        println!("After fov change");
                         (*writer).cameras[c].update();
-                        println!("After fov change");
-                        println!("After change");
                     }
+                    ui.separator();
                 }
             });
         for e in &mut self.sub_elements {

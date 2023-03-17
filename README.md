@@ -21,3 +21,7 @@ src/
 ├── main.rs
 └── hittable.rs  -- Holds the Hittable trait and its implementations
 ```
+
+## Known issues
+- Cant write access other cameras while rendering. -> deadlock even though it should be possible. Maybe implement seperate mutex on camera?
+- Attempting to change scene settings during render will deadlock main thread.
