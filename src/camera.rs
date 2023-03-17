@@ -12,8 +12,10 @@ pub struct Camera {
     v: Vector3,
 
     lens_radius: f64,
+    pub settings: CameraSettings,
 }
 
+#[derive(Copy, Clone)]
 pub struct CameraSettings {
     pub look_from: Point3,
     pub look_at: Point3,
@@ -65,7 +67,13 @@ impl Camera {
             u,
             v,
             lens_radius,
+            settings: s,
         }
+    }
+
+    pub fn update(&mut self) {
+        let updated = Camera::new(self.settings);
+        *self = updated;
     }
 
     pub fn get_ray(&self, u: f64, v: f64) -> Ray {

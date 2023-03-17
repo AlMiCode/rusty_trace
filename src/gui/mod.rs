@@ -1,9 +1,15 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release //
 
-use crate::{scene::Scene, camera::CameraSettings, hittable::Sphere, material::{DiffuseLight, Dielectric, Metal, Lambertian}, Colour};
+use crate::{
+    camera::CameraSettings,
+    hittable::Sphere,
+    material::{Dielectric, DiffuseLight, Lambertian, Metal},
+    scene::Scene,
+    Colour,
+};
 
 use std::sync::Arc;
-use egui::mutex::RwLock;
+use std::sync::RwLock;
 
 use cgmath::point3;
 use eframe::egui;
@@ -19,15 +25,12 @@ pub struct WindowDimensions {
 
 pub struct Gui {
     elements: Vec<Box<dyn GuiElement>>,
-    scenes: Vec<Arc<RwLock<Scene>>>,
 }
 
 impl Default for Gui {
     fn default() -> Self {
         let mut scene = Scene::default();
-        scene.add_camera(
-            CameraSettings::default(),
-        );
+        scene.add_camera(CameraSettings::default());
         let lambert = Arc::new(Lambertian {
             albedo: Arc::new(Colour::new(0.5, 0.5, 0.8)),
         });
@@ -49,9 +52,10 @@ impl Default for Gui {
             20.0,
             lambert,
         )));
+        let scene_arc = Arc::new(RwLock::new(scene));
+        let scene_editor = SceneEditorGuiElement::new(String::from("Scene editor"), scene_arc);
         Self {
-            elements: vec![],
-            scenes: vec![Arc::new(RwLock::new(scene))]
+            elements: vec![Box::new(scene_editor)],
         }
     }
 }
@@ -70,17 +74,9 @@ pub fn start(gui: Gui, dimensions: WindowDimensions, title: &str) -> Result<(), 
 
 impl eframe::App for Gui {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            if ui.button("Render").clicked() {
-                let guielement = Box::new(ImageGuiElement::new(
-                    self.elements.len(),
-                    (640,360),
-                    &self.scenes[0],
-                    0
-                ));
-                self.elements.push(guielement);
-            }
-        });
+        // egui::CentralPanel::default().show(ctx, |ui| {
+
+        // });
         for e in &mut self.elements {
             e.show(ctx);
         }

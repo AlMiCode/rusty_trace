@@ -69,12 +69,14 @@ pub fn cast_ray(ray: Ray, hittable: &dyn Hittable, background: &dyn Texture, dep
         let emitted = hit.material.emit(hit.uv.0, hit.uv.1);
         match hit.material.scatter(&ray, &hit) {
             None => emitted,
-            Some(scattered) => scattered.attenuation.mul_element_wise(cast_ray(
-                scattered.ray,
-                hittable,
-                background,
-                depth - 1,
-            )) + emitted,
+            Some(scattered) => {
+                scattered.attenuation.mul_element_wise(cast_ray(
+                    scattered.ray,
+                    hittable,
+                    background,
+                    depth - 1,
+                )) + emitted
+            }
         }
     } else {
         let (u, v) = Sphere::get_uv(&ray.direction);
