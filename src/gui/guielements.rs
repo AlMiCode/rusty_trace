@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::sync::RwLock;
 
-use crate::{camera::Camera, render, scene::Scene};
+use crate::{render, scene::Scene};
 use egui::ColorImage;
 use egui_extras::RetainedImage;
 use image::RgbImage;
