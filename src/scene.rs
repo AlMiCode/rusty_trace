@@ -13,7 +13,7 @@ pub struct Scene {
 
 impl Default for Scene {
     fn default() -> Self {
-        let background = Box::new(Colour::new(0.0, 0.0, 0.0));
+        let background = Box::new(Colour::new(0.1, 0.65, 0.9));
         Self {
             hittable: HittableVec::new(),
             cameras: vec![],

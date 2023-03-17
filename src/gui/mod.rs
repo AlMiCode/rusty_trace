@@ -32,6 +32,7 @@ impl Default for Gui {
         let mut scene = Scene::default();
         scene.add_camera(CameraSettings::default());
         scene.add_camera(CameraSettings::default());
+        scene.add_camera(CameraSettings::default());
         let lambert = Arc::new(Lambertian {
             albedo: Arc::new(Colour::new(0.5, 0.5, 0.8)),
         });

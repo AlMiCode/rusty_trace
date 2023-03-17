@@ -18,8 +18,9 @@ pub trait Hittable {
     fn hit(&self, ray: &Ray) -> Option<HitRecord> {
         self.hit_bounded(ray, f64::EPSILON, f64::INFINITY)
     }
+    fn get_position(&self) -> Point3;
+    fn set_position(&mut self, c: Point3);
 }
-
 pub type HittableVec = Vec<Box<dyn Hittable + Sync + Send>>;
 
 impl Hittable for HittableVec {
@@ -37,6 +38,9 @@ impl Hittable for HittableVec {
         }
         result
     }
+
+    fn get_position(&self) -> Point3 { unimplemented!() }
+    fn set_position(&mut self, c: Point3) { unimplemented!() }
 }
 
 #[derive(Clone)]
@@ -100,5 +104,10 @@ impl Hittable for Sphere {
         };
 
         Some(result)
+    }
+
+    fn get_position(&self) -> Point3 { self.center }
+    fn set_position(&mut self, c: Point3) {
+        self.center = c;
     }
 }

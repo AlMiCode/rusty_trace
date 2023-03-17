@@ -57,6 +57,7 @@ impl Camera {
         let lower_left_corner = origin - horizontal / 2.0 - vertical / 2.0 - w * focus_dist;
 
         let lens_radius = s.aperture / 2.0;
+        println!("{}", lens_radius);
 
         Camera {
             origin,
