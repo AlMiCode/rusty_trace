@@ -30,21 +30,21 @@ pub trait Material {
 }
 
 pub struct Lambertian {
-    pub albedo: Arc<dyn Texture + Sync + Send>,
+    pub albedo: Arc<Texture>,
 }
 
 pub struct Metal {
-    pub albedo: Arc<dyn Texture + Sync + Send>,
+    pub albedo: Arc<Texture>,
     pub fuzz: f64,
 }
 pub struct Dielectric {
     pub refractive_index: f64,
 }
 pub struct DiffuseLight {
-    pub emit: Arc<dyn Texture + Sync + Send>,
+    pub emit: Arc<Texture>,
 }
 pub struct Isotropic {
-    pub albedo: Arc<dyn Texture + Sync + Send>,
+    pub albedo: Arc<Texture>,
 }
 
 impl Material for Lambertian {

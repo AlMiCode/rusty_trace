@@ -1,8 +1,11 @@
 use std::sync::Arc;
 use std::sync::RwLock;
 
+use crate::texture::Texture;
 use crate::{render, scene::Scene};
+use egui::Color32;
 use egui::ColorImage;
+use egui::color_picker;
 use egui_extras::RetainedImage;
 use image::RgbImage;
 use poll_promise::Promise;
@@ -89,20 +92,26 @@ impl GuiElement for SceneEditor {
             .show(ctx, |ui| {
                 ui.collapsing("Scene", |ui| {
                     ui.collapsing("Background", |ui| {
-                        ui.horizontal(|ui| {
-                            let reader = scene_clone.read().unwrap();
-                            let mut c = reader.background.as_ref().colour_at(0.0, 0.0);
-                            drop(reader);
-                            ui.label("R: ");
-                            let r = ui.add(egui::DragValue::new(&mut c.x)).changed();
-                            ui.label("G: ");
-                            let g = ui.add(egui::DragValue::new(&mut c.y)).changed();
-                            ui.label("B: ");
-                            let b = ui.add(egui::DragValue::new(&mut c.z)).changed();
-                            if r || g || b {
-                                let mut writer = scene_clone.write().unwrap();
-                                (*writer).background.as_mut().set_colour_at(c);
-                            }
+                        ui.vertical(|ui| {
+                            ui.horizontal(|ui| {
+                                ui.label("Current: ");
+                                let reader = scene_clone.read().unwrap();
+                                let tex = &reader.background;
+                                if let Texture::Colour(c) = tex {
+                                    let colour: Color32 = egui::Rgba::from_rgb(c.x as f32, c.y as f32, c.z as f32).into();
+                                    color_picker::show_color(ui, colour, egui::vec2(35.0, 15.0));
+                                } else {
+                                    ui.label("Image. Unimplemented");
+                                }
+                                drop(reader);
+                                if ui.button("Change").clicked() {
+                                    let tex_editor = Box::new(TextureEditor::new(Box::new(|tex, handle| {
+                                        let mut writer = handle.write().unwrap();
+                                        (*writer).background = tex;
+                                    }), self.scene.clone()));
+                                    self.sub_elements.push(tex_editor);
+                                }
+                            });
                         });
                     });
                     ui.collapsing("Objects", |ui| {
@@ -254,5 +263,44 @@ impl GuiElement for SceneEditor {
         for e in &mut self.sub_elements {
             e.show(ctx);
         }
+    }
+}
+
+struct TextureEditor {
+    rgb: [f32; 3],
+    image: RgbImage,
+    choosing_colour: bool,
+    on_submit: Box<dyn Fn(Texture, &Arc<RwLock<Scene>>)>,
+    scene_handle: Arc<RwLock<Scene>>
+}
+
+impl TextureEditor {
+    fn new(on_submit: Box<dyn Fn(Texture, &Arc<RwLock<Scene>>)>, scene: Arc<RwLock<Scene>>) -> Self {
+        TextureEditor { rgb: [0f32, 0f32, 0f32], image: RgbImage::new(8, 8), choosing_colour: true, on_submit, scene_handle: scene}
+    }
+}
+
+impl GuiElement for TextureEditor {
+    fn show(&mut self, ctx: &egui::Context) {
+        let pos = egui::pos2(10.0, 10.0);
+
+        egui::Window::new("Texture Editor")
+            .default_pos(pos)
+            .show(ctx, |ui| {
+                ui.horizontal(|ui| {
+                    ui.selectable_value(&mut self.choosing_colour, true, "Colour");
+                    ui.selectable_value(&mut self.choosing_colour, false, "Image");
+                });
+                ui.horizontal(|ui| {
+                    if self.choosing_colour {
+                        egui::color_picker::color_edit_button_rgb(ui, &mut self.rgb);
+                        if ui.button("Set").clicked() {
+                            self.on_submit.as_ref()(Texture::Colour(self.rgb.map(|n| n as f64).into()), &self.scene_handle);
+                        }
+                    } else {
+                        ui.label("File picker. Unimplemented");
+                    }
+                });
+            });
     }
 }

@@ -23,7 +23,7 @@ pub fn render(
     image: &mut RgbImage,
     camera: &Camera,
     scene: &HittableVec,
-    background: &Box<dyn Texture + Send + Sync>,
+    background: &Texture,
     sample_count: u32,
 ) {
     let (width, height) = image.dimensions();
@@ -35,7 +35,7 @@ pub fn render(
                 let v = y as f64 / (height - 1) as f64;
                 let r = camera.get_ray(u, v);
 
-                colour += cast_ray(r, scene, background.as_ref(), 30)
+                colour += cast_ray(r, scene, background, 30)
             }
             let pixel: Rgb<u8> = vec_to_rgb(gamma_correction(colour / sample_count as f64));
             image.put_pixel(x, height - y - 1, pixel);
@@ -61,7 +61,7 @@ impl Ray {
     }
 }
 
-pub fn cast_ray(ray: Ray, hittable: &dyn Hittable, background: &dyn Texture, depth: u32) -> Colour {
+pub fn cast_ray(ray: Ray, hittable: &dyn Hittable, background: &Texture, depth: u32) -> Colour {
     if depth == 0 {
         return Colour::new(0.0, 0.0, 0.0);
     }

@@ -8,12 +8,12 @@ use crate::{
 pub struct Scene {
     pub hittable: HittableVec,
     pub cameras: Vec<Camera>,
-    pub background: Box<dyn Texture + Send + Sync>,
+    pub background: Texture,
 }
 
 impl Default for Scene {
     fn default() -> Self {
-        let background = Box::new(Colour::new(0.1, 0.65, 0.9));
+        let background = Colour::new(0.1, 0.65, 0.9).into();
         Self {
             hittable: HittableVec::new(),
             cameras: vec![],

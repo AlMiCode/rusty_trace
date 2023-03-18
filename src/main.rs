@@ -7,6 +7,7 @@ static WIN_DIMENSIONS: WindowDimensions = WindowDimensions {
 static WIN_TITLE: &str = "Rusty Trace";
 
 fn main() -> Result<(), String> {
+    print!("{}", std::mem::size_of::<image::RgbImage>());
     let gui = Gui::default();
     start(gui, WIN_DIMENSIONS, WIN_TITLE).unwrap();
     Ok(())
