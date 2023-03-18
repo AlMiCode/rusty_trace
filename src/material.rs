@@ -3,6 +3,7 @@ use std::sync::Arc;
 use cgmath::{InnerSpace, Zero};
 
 use crate::hittable::HitRecord;
+use crate::resource_manager::ResourceManager;
 use crate::texture::Texture;
 use crate::{random_f64, random_vec_in_sphere, Colour, Ray, Vector3};
 
@@ -22,12 +23,14 @@ pub struct ScatterRecord {
     pub attenuation: Colour,
 }
 
-pub trait Material {
+pub trait Material: Sync + Send {
     fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<ScatterRecord>;
     fn emit(&self, _u: f64, _v: f64) -> Colour {
         Colour::zero()
     }
 }
+
+pub type MaterialManager = ResourceManager<Arc<dyn Material>>;
 
 pub struct Lambertian {
     pub albedo: Arc<Texture>,

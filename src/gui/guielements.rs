@@ -39,7 +39,9 @@ impl ImageGuiElement {
                     &(*scene_value).cameras[cam_index],
                     &(*scene_value).hittable,
                     &(*scene_value).background,
-                    200,
+                    &(*scene_value).materials,
+                    20,
+                    30
                 );
                 RetainedImage::from_color_image(
                     "render",
