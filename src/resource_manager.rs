@@ -1,19 +1,19 @@
-use std::{sync::atomic::{AtomicU32, Ordering}, marker::PhantomData, collections::HashMap};
+use std::{sync::{atomic::{AtomicU32, Ordering}, Arc}, marker::PhantomData, collections::HashMap};
 
 #[repr(transparent)]
-pub struct Id<T> {
+pub struct Id<T: ?Sized> {
     id: u32, 
     phantom: PhantomData<T>
 }
 
-impl<T> Copy for Id<T> {}
-impl<T> Clone for Id<T> {
+impl<T> Copy for Id<T> where T: ?Sized {}
+impl<T> Clone for Id<T> where T: ?Sized {
     fn clone(&self) -> Self {
         Id { id: self.id, phantom: PhantomData }
     }
 }
 
-impl<T> Id<T> {
+impl<T> Id<T> where T: ?Sized {
     pub fn new() -> Self {
         static NEXT_ID: AtomicU32 = AtomicU32::new(1);
         let id = NEXT_ID.fetch_add(1, Ordering::Relaxed);
@@ -24,25 +24,25 @@ impl<T> Id<T> {
     fn get(self) -> u32 { self.id }
 }
 
-pub struct ResourceManager<T> {
-    resources: HashMap<u32, T>,
-    default_value: T
+pub struct ResourceManager<T: ?Sized> {
+    resources: HashMap<u32, Arc<T>>,
+    default_value: Arc<T>
 }
 
-impl<T> ResourceManager<T> {
-    pub fn new(default_value: T) -> Self {
+impl<T> ResourceManager<T> where T: ?Sized {
+    pub fn new(default_value: Arc<T>) -> Self {
         Self { resources: HashMap::new(), default_value }
     }
 
-    pub fn get(&self, id: Id<T>) -> &T {
+    pub fn get(&self, id: Id<T>) -> &Arc<T> {
         self.resources.get(&id.get()).unwrap_or(&self.default_value)
     }
 
-    pub fn get_mut(&mut self, id: Id<T>) -> &mut T {
+    pub fn get_mut(&mut self, id: Id<T>) -> &mut Arc<T> {
         self.resources.get_mut(&id.get()).unwrap_or(&mut self.default_value)
     }
 
-    pub fn insert(&mut self, id: Id<T>, value: T) {
+    pub fn insert(&mut self, id: Id<T>, value: Arc<T>) {
         self.resources.insert(id.get(), value);
     }
 }

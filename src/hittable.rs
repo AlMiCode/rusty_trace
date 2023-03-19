@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::material::Material;
 use crate::resource_manager::Id;
 use crate::{Point3, Ray, Vector3};
@@ -11,7 +9,7 @@ pub struct HitRecord {
     pub distance: f64,
     pub uv: (f64, f64),
     pub front_face: bool,
-    pub material_id: Id<Arc<dyn Material>>,
+    pub material_id: Id<dyn Material>,
 }
 
 pub trait Hittable {
@@ -48,11 +46,11 @@ impl Hittable for HittableVec {
 pub struct Sphere {
     center: Point3,
     radius: f64,
-    material_id: Id<Arc<dyn Material>>,
+    material_id: Id<dyn Material>,
 }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: f64, material_id: Id<Arc<dyn Material>>) -> Self {
+    pub fn new(center: Point3, radius: f64, material_id: Id<dyn Material>) -> Self {
         Sphere {
             center,
             radius,

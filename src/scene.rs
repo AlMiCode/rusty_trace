@@ -36,7 +36,7 @@ impl Scene {
         self.cameras.push(Camera::new(settings))
     }
 
-    pub fn add_material(&mut self, material: Arc<dyn Material>) -> Id<Arc<dyn Material>> {
+    pub fn add_material(&mut self, material: Arc<dyn Material>) -> Id<dyn Material> {
         let id = Id::new();
         self.materials.insert(id, material);
         id

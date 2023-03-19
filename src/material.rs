@@ -30,7 +30,7 @@ pub trait Material: Sync + Send {
     }
 }
 
-pub type MaterialManager = ResourceManager<Arc<dyn Material>>;
+pub type MaterialManager = ResourceManager<dyn Material>;
 
 pub struct Lambertian {
     pub albedo: Arc<Texture>,
