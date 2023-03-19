@@ -321,11 +321,10 @@ impl GuiElement for TexturesEditor {
         egui::Window::new("Textures Editor")
             .show(ctx, |ui| {
                 let reader = self.scene_handle.read().unwrap();
-                let textures = &reader.textures;
 
                 ui.collapsing("Default", |ui| {
                     ui.horizontal(|ui| {
-                        if let Texture::Colour(c) = textures.get_default() {
+                        if let Texture::Colour(c) = reader.textures.get_default() {
                             ui.label("Colour: ");
                             let colour: Color32 = egui::Rgba::from_rgb(c.x, c.y, c.z).into();
                             color_picker::show_color(ui, colour, egui::vec2(35.0, 15.0));
@@ -335,7 +334,7 @@ impl GuiElement for TexturesEditor {
                     });
                 });
 
-                for (id, tex) in textures.iter() {
+                for (id, tex) in reader.textures.iter() {
                     ui.collapsing(format!("Texture {}", id), |ui| {
                         ui.horizontal(|ui| {
                             if let Texture::Colour(c) = tex.as_ref() {
