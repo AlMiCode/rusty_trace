@@ -4,7 +4,7 @@ use hittable::{Hittable, HittableVec, Sphere};
 use image::{Rgb, RgbImage};
 use material::MaterialManager;
 use rand::Rng;
-use texture::Texture;
+use texture::{Texture, TextureManager};
 
 use std::io::Write;
 
@@ -27,6 +27,7 @@ pub fn render(
     scene: &HittableVec,
     background: &Texture,
     materials: &MaterialManager,
+    textures: &TextureManager,
     sample_count: u32,
     depth: u32
 ) {
@@ -39,7 +40,7 @@ pub fn render(
                 let v = y as f64 / (height - 1) as f64;
                 let r = camera.get_ray(u, v);
 
-                colour += cast_ray(r, scene, background, materials, depth)
+                colour += cast_ray(r, scene, background, materials, textures, depth)
             }
             let pixel: Rgb<u8> = vec_to_rgb(gamma_correction(colour / sample_count as f64));
             image.put_pixel(x, height - y - 1, pixel);
@@ -65,13 +66,13 @@ impl Ray {
     }
 }
 
-pub fn cast_ray(ray: Ray, hittable: &dyn Hittable, background: &Texture, materials: &MaterialManager, depth: u32) -> Colour {
+pub fn cast_ray(ray: Ray, hittable: &dyn Hittable, background: &Texture, materials: &MaterialManager, textures: &TextureManager, depth: u32) -> Colour {
     if depth == 0 {
         return Colour::new(0.0, 0.0, 0.0);
     }
     if let Some(hit) = hittable.hit_bounded(&ray, 0.0001, f64::INFINITY) {
-        let emitted = materials.get(hit.material_id).emit(hit.uv.0, hit.uv.1);
-        match materials.get(hit.material_id).scatter(&ray, &hit) {
+        let emitted = materials.get(hit.material_id).emit(hit.uv.0, hit.uv.1, textures);
+        match materials.get(hit.material_id).scatter(&ray, &hit, textures) {
             None => emitted,
             Some(scattered) => {
                 scattered.attenuation.mul_element_wise(cast_ray(
@@ -79,6 +80,7 @@ pub fn cast_ray(ray: Ray, hittable: &dyn Hittable, background: &Texture, materia
                     hittable,
                     background,
                     materials,
+                    textures,
                     depth - 1,
                 )) + emitted
             }

@@ -34,13 +34,13 @@ impl<T> ResourceManager<T> where T: ?Sized {
         Self { resources: HashMap::new(), default_value }
     }
 
-    pub fn get(&self, id: Id<T>) -> &Arc<T> {
+    pub fn get(&self, id: Id<T>) -> &T {
         self.resources.get(&id.get()).unwrap_or(&self.default_value)
     }
 
-    pub fn get_mut(&mut self, id: Id<T>) -> &mut Arc<T> {
-        self.resources.get_mut(&id.get()).unwrap_or(&mut self.default_value)
-    }
+    //pub fn get_mut(&mut self, id: Id<T>) -> &mut T {
+    //    self.resources.get_mut(&id.get()).unwrap_or(&mut self.default_value)
+    //}
 
     pub fn insert(&mut self, id: Id<T>, value: Arc<T>) {
         self.resources.insert(id.get(), value);

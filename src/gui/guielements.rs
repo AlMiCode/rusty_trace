@@ -40,7 +40,8 @@ impl ImageGuiElement {
                     &(*scene_value).hittable,
                     &(*scene_value).background,
                     &(*scene_value).materials,
-                    20,
+                    &(*scene_value).textures,
+                    5,
                     30
                 );
                 RetainedImage::from_color_image(
@@ -154,7 +155,7 @@ impl GuiElement for SceneEditor {
                                 if ui.button("Render").clicked() {
                                     let guielement = Box::new(ImageGuiElement::new(
                                         c, self.sub_elements.len(),
-                                        (640, 360),
+                                        (400, 400),
                                         &self.scene,
                                         c,
                                     ));

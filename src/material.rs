@@ -1,10 +1,8 @@
-use std::sync::Arc;
-
 use cgmath::{InnerSpace, Zero};
 
 use crate::hittable::HitRecord;
-use crate::resource_manager::ResourceManager;
-use crate::texture::Texture;
+use crate::resource_manager::{ResourceManager, Id};
+use crate::texture::{Texture, TextureManager};
 use crate::{random_f64, random_vec_in_sphere, Colour, Ray, Vector3};
 
 fn reflect(vec: &Vector3, normal: &Vector3) -> Vector3 {
@@ -24,8 +22,8 @@ pub struct ScatterRecord {
 }
 
 pub trait Material: Sync + Send {
-    fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<ScatterRecord>;
-    fn emit(&self, _u: f64, _v: f64) -> Colour {
+    fn scatter(&self, ray: &Ray, hit: &HitRecord, textures: &TextureManager) -> Option<ScatterRecord>;
+    fn emit(&self, _u: f64, _v: f64, _textures: &TextureManager) -> Colour {
         Colour::zero()
     }
 }
@@ -33,25 +31,25 @@ pub trait Material: Sync + Send {
 pub type MaterialManager = ResourceManager<dyn Material>;
 
 pub struct Lambertian {
-    pub albedo: Arc<Texture>,
+    pub albedo: Id<Texture>,
 }
 
 pub struct Metal {
-    pub albedo: Arc<Texture>,
+    pub albedo: Id<Texture>,
     pub fuzz: f64,
 }
 pub struct Dielectric {
     pub refractive_index: f64,
 }
 pub struct DiffuseLight {
-    pub emit: Arc<Texture>,
+    pub emit: Id<Texture>,
 }
 pub struct Isotropic {
-    pub albedo: Arc<Texture>,
+    pub albedo: Id<Texture>,
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, _ray: &Ray, hit: &HitRecord) -> Option<ScatterRecord> {
+    fn scatter(&self, _ray: &Ray, hit: &HitRecord, textures: &TextureManager) -> Option<ScatterRecord> {
         let scatter_dir = hit.normal + random_vec_in_sphere();
         let scatter_dir = if scatter_dir.magnitude2() < 0.000001 {
             hit.normal
@@ -60,18 +58,18 @@ impl Material for Lambertian {
         };
         Some(ScatterRecord {
             ray: Ray::new(hit.point, scatter_dir),
-            attenuation: self.albedo.colour_at(hit.uv.0, hit.uv.1),
+            attenuation: textures.get(self.albedo).colour_at(hit.uv.0, hit.uv.1),
         })
     }
 }
 
 impl Material for Metal {
-    fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<ScatterRecord> {
+    fn scatter(&self, ray: &Ray, hit: &HitRecord, textures: &TextureManager) -> Option<ScatterRecord> {
         let dir = reflect(&ray.direction, &hit.normal) + random_vec_in_sphere() * self.fuzz;
         if dir.dot(hit.normal) > 0.0 {
             Some(ScatterRecord {
                 ray: Ray::new(hit.point, dir),
-                attenuation: self.albedo.colour_at(hit.uv.0, hit.uv.1),
+                attenuation: textures.get(self.albedo).colour_at(hit.uv.0, hit.uv.1),
             })
         } else {
             None
@@ -88,7 +86,7 @@ impl Dielectric {
 }
 
 impl Material for Dielectric {
-    fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<ScatterRecord> {
+    fn scatter(&self, ray: &Ray, hit: &HitRecord, _textures: &TextureManager) -> Option<ScatterRecord> {
         let refraction_ratio = if hit.front_face {
             1.0 / self.refractive_index
         } else {
@@ -113,19 +111,19 @@ impl Material for Dielectric {
 }
 
 impl Material for DiffuseLight {
-    fn scatter(&self, _ray: &Ray, _hit: &HitRecord) -> Option<ScatterRecord> {
+    fn scatter(&self, _ray: &Ray, _hit: &HitRecord, _textures: &TextureManager) -> Option<ScatterRecord> {
         None
     }
-    fn emit(&self, u: f64, v: f64) -> Colour {
-        self.emit.colour_at(u, v)
+    fn emit(&self, u: f64, v: f64, textures: &TextureManager) -> Colour {
+        textures.get(self.emit).colour_at(u, v)
     }
 }
 
 impl Material for Isotropic {
-    fn scatter(&self, _ray: &Ray, hit: &HitRecord) -> Option<ScatterRecord> {
+    fn scatter(&self, _ray: &Ray, hit: &HitRecord, textures: &TextureManager) -> Option<ScatterRecord> {
         Some(ScatterRecord {
             ray: Ray::new(hit.point, random_vec_in_sphere()),
-            attenuation: self.albedo.colour_at(hit.uv.0, hit.uv.1),
+            attenuation: textures.get(self.albedo).colour_at(hit.uv.0, hit.uv.1),
         })
     }
 }
