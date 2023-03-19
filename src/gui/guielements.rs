@@ -108,7 +108,7 @@ impl GuiElement for SceneEditor {
                             }
                             drop(reader);
                             if ui.button("Change").clicked() {
-                                let tex_editor = Box::new(TextureEditor::new(tex, self.scene.clone()));
+                                let tex_editor = Box::new(TexturesEditor::new(scene_clone.clone()));
                                 self.sub_elements.push(tex_editor);
                             }
                         });
@@ -283,7 +283,7 @@ impl GuiElement for TextureEditor {
     fn show(&mut self, ctx: &egui::Context) {
         let pos = egui::pos2(10.0, 10.0);
 
-        egui::Window::new("Texture Editor")
+        egui::Window::new(format!("Texture {}", self.tex_id))
             .default_pos(pos)
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
@@ -302,5 +302,59 @@ impl GuiElement for TextureEditor {
                     }
                 });
             });
+    }
+}
+
+struct TexturesEditor {
+    scene_handle: Arc<RwLock<Scene>>,
+    sub_elements: Vec<Box<dyn GuiElement>>,
+}
+
+impl TexturesEditor {
+    fn new(scene_handle: Arc<RwLock<Scene>>) -> Self {
+        TexturesEditor { scene_handle, sub_elements: vec![] }
+    }
+}
+
+impl GuiElement for TexturesEditor {
+    fn show(&mut self, ctx: &egui::Context) {
+        egui::Window::new("Textures Editor")
+            .show(ctx, |ui| {
+                let reader = self.scene_handle.read().unwrap();
+                let textures = &reader.textures;
+
+                ui.collapsing("Default", |ui| {
+                    ui.horizontal(|ui| {
+                        if let Texture::Colour(c) = textures.get_default() {
+                            ui.label("Colour: ");
+                            let colour: Color32 = egui::Rgba::from_rgb(c.x, c.y, c.z).into();
+                            color_picker::show_color(ui, colour, egui::vec2(35.0, 15.0));
+                        } else {
+                            ui.label("Image: Unimplemented");
+                        }
+                    });
+                });
+
+                for (id, tex) in textures.iter() {
+                    ui.collapsing(format!("Texture {}", id), |ui| {
+                        ui.horizontal(|ui| {
+                            if let Texture::Colour(c) = tex.as_ref() {
+                                ui.label("Colour: ");
+                                let colour: Color32 = egui::Rgba::from_rgb(c.x, c.y, c.z).into();
+                                color_picker::show_color(ui, colour, egui::vec2(35.0, 15.0));
+                            } else {
+                                ui.label("Image: Unimplemented");
+                            }
+                            if ui.button("Change").clicked() {
+                                let tex_editor = Box::new(TextureEditor::new(*id, self.scene_handle.clone()));
+                                self.sub_elements.push(tex_editor);
+                            }
+                        });
+                    });
+                }
+            });
+            for e in &mut self.sub_elements {
+                e.show(ctx);
+            }
     }
 }
