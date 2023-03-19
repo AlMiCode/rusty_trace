@@ -1,4 +1,4 @@
-use std::{sync::{atomic::{AtomicU32, Ordering}, Arc}, marker::PhantomData, collections::HashMap};
+use std::{sync::atomic::{AtomicU32, Ordering}, marker::PhantomData, collections::HashMap};
 
 #[repr(transparent)]
 pub struct Id<T: ?Sized> {
@@ -25,12 +25,12 @@ impl<T> Id<T> where T: ?Sized {
 }
 
 pub struct ResourceManager<T: ?Sized> {
-    resources: HashMap<u32, Arc<T>>,
-    default_value: Arc<T>
+    resources: HashMap<u32, Box<T>>,
+    default_value: Box<T>
 }
 
 impl<T> ResourceManager<T> where T: ?Sized {
-    pub fn new(default_value: Arc<T>) -> Self {
+    pub fn new(default_value: Box<T>) -> Self {
         Self { resources: HashMap::new(), default_value }
     }
 
@@ -38,11 +38,11 @@ impl<T> ResourceManager<T> where T: ?Sized {
         self.resources.get(&id.get()).unwrap_or(&self.default_value)
     }
 
-    //pub fn get_mut(&mut self, id: Id<T>) -> &mut T {
-    //    self.resources.get_mut(&id.get()).unwrap_or(&mut self.default_value)
-    //}
+    pub fn get_mut(&mut self, id: Id<T>) -> &mut T {
+        self.resources.get_mut(&id.get()).unwrap_or(&mut self.default_value)
+    }
 
-    pub fn insert(&mut self, id: Id<T>, value: Arc<T>) {
+    pub fn insert(&mut self, id: Id<T>, value: Box<T>) {
         self.resources.insert(id.get(), value);
     }
 }

@@ -34,15 +34,15 @@ impl Default for Gui {
         scene.add_camera(CameraSettings::default());
         scene.add_camera(CameraSettings::default());
 
-        let blue = scene.add_texture(Arc::new(Colour::new(0.8, 0.8, 0.5).into()));
-        let gold = scene.add_texture(Arc::new(Colour::new(0.8, 0.8, 0.5).into()));
-        let white_light = scene.add_texture(Arc::new(Colour::new(5.0, 5.0, 5.0).into()));
+        let blue = scene.add_texture(Box::new(Colour::new(0.8, 0.8, 0.5).into()));
+        let gold = scene.add_texture(Box::new(Colour::new(0.8, 0.8, 0.5).into()));
+        let white_light = scene.add_texture(Box::new(Colour::new(5.0, 5.0, 5.0).into()));
         
-        let lambert = scene.add_material(Arc::new(Lambertian { albedo: blue }));
-        let metal = scene.add_material(Arc::new(Metal { albedo: gold, fuzz: 0.4 }));
-        let glass = scene.add_material(Arc::new(Dielectric { refractive_index: 1.5 }));
-        let light = scene.add_material(Arc::new(DiffuseLight { emit: white_light }));
-        
+        let lambert = scene.add_material(Box::new(Lambertian { albedo: blue }));
+        let metal = scene.add_material(Box::new(Metal { albedo: gold, fuzz: 0.4 }));
+        let glass = scene.add_material(Box::new(Dielectric { refractive_index: 1.5 }));
+        let light = scene.add_material(Box::new(DiffuseLight { emit: white_light }));
+
         scene.add_shape(Box::new(Sphere::new(point3(-0.5, 0.0, -1.0), 0.5, metal)));
         scene.add_shape(Box::new(Sphere::new(point3(0.5, 0.0, -1.0), 0.5, glass)));
         scene.add_shape(Box::new(Sphere::new(point3(0.0, 2.0, -1.5), 1.0, light)));
