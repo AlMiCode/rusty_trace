@@ -45,4 +45,8 @@ impl<T> ResourceManager<T> where T: ?Sized {
     pub fn insert(&mut self, id: Id<T>, value: Box<T>) {
         self.resources.insert(id.get(), value);
     }
+
+    pub fn remove(&mut self, id: Id<T>) -> Option<Box<T>> {
+        self.resources.remove(&id.get())
+    }
 }

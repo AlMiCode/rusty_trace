@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     camera::{Camera, CameraSettings},
     hittable::{Hittable, HittableVec},
@@ -10,7 +8,7 @@ use crate::{
 pub struct Scene {
     pub hittable: HittableVec,
     pub cameras: Vec<Camera>,
-    pub background: Texture,
+    pub background: Id<Texture>,
     pub materials: MaterialManager,
     pub textures: TextureManager
 }
@@ -26,7 +24,7 @@ impl Default for Scene {
         Self {
             hittable: HittableVec::new(),
             cameras: vec![],
-            background,
+            background: id,
             materials: MaterialManager::new(default_mat),
             textures
         }

@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use std::sync::RwLock;
 
+use crate::resource_manager::Id;
 use crate::texture::Texture;
 use crate::{render, scene::Scene};
 use egui::Color32;
@@ -38,7 +39,7 @@ impl ImageGuiElement {
                     &mut image,
                     &(*scene_value).cameras[cam_index],
                     &(*scene_value).hittable,
-                    &(*scene_value).background,
+                    &(*scene_value).textures.get((*scene_value).background),
                     &(*scene_value).materials,
                     &(*scene_value).textures,
                     5,
@@ -94,27 +95,22 @@ impl GuiElement for SceneEditor {
             .vscroll(true)
             .show(ctx, |ui| {
                 ui.collapsing("Scene", |ui| {
-                    ui.collapsing("Background", |ui| {
-                        ui.vertical(|ui| {
-                            ui.horizontal(|ui| {
-                                ui.label("Current: ");
-                                let reader = scene_clone.read().unwrap();
-                                let tex = &reader.background;
-                                if let Texture::Colour(c) = tex {
-                                    let colour: Color32 = egui::Rgba::from_rgb(c.x as f32, c.y as f32, c.z as f32).into();
-                                    color_picker::show_color(ui, colour, egui::vec2(35.0, 15.0));
-                                } else {
-                                    ui.label("Image. Unimplemented");
-                                }
-                                drop(reader);
-                                if ui.button("Change").clicked() {
-                                    let tex_editor = Box::new(TextureEditor::new(Box::new(|tex, handle| {
-                                        let mut writer = handle.write().unwrap();
-                                        (*writer).background = tex;
-                                    }), self.scene.clone()));
-                                    self.sub_elements.push(tex_editor);
-                                }
-                            });
+                    ui.collapsing("Background", |ui| {  
+                        ui.horizontal(|ui| {
+                            ui.label("Current: ");
+                            let reader = scene_clone.read().unwrap();
+                            let tex = reader.background;
+                            if let Texture::Colour(c) = reader.textures.get(tex) {
+                                let colour: Color32 = egui::Rgba::from_rgb(c.x, c.y, c.z).into();
+                                color_picker::show_color(ui, colour, egui::vec2(35.0, 15.0));
+                            } else {
+                                ui.label("Image. Unimplemented");
+                            }
+                            drop(reader);
+                            if ui.button("Change").clicked() {
+                                let tex_editor = Box::new(TextureEditor::new(tex, self.scene.clone()));
+                                self.sub_elements.push(tex_editor);
+                            }
                         });
                     });
                     ui.collapsing("Objects", |ui| {
@@ -270,16 +266,16 @@ impl GuiElement for SceneEditor {
 }
 
 struct TextureEditor {
+    tex_id: Id<Texture>,
     rgb: [f32; 3],
     image: RgbImage,
     choosing_colour: bool,
-    on_submit: Box<dyn Fn(Texture, &Arc<RwLock<Scene>>)>,
     scene_handle: Arc<RwLock<Scene>>
 }
 
 impl TextureEditor {
-    fn new(on_submit: Box<dyn Fn(Texture, &Arc<RwLock<Scene>>)>, scene: Arc<RwLock<Scene>>) -> Self {
-        TextureEditor { rgb: [0f32, 0f32, 0f32], image: RgbImage::new(8, 8), choosing_colour: true, on_submit, scene_handle: scene}
+    fn new(tex_id: Id<Texture>, scene_handle: Arc<RwLock<Scene>>) -> Self {
+        TextureEditor { tex_id, rgb: [0f32, 0f32, 0f32], image: RgbImage::new(8, 8), choosing_colour: true, scene_handle}
     }
 }
 
@@ -298,7 +294,8 @@ impl GuiElement for TextureEditor {
                     if self.choosing_colour {
                         egui::color_picker::color_edit_button_rgb(ui, &mut self.rgb);
                         if ui.button("Set").clicked() {
-                            self.on_submit.as_ref()(Texture::Colour(self.rgb.map(|n| n as f64).into()), &self.scene_handle);
+                            let mut writer = self.scene_handle.write().unwrap();
+                            (*(*writer).textures.get_mut(self.tex_id)) = Texture::Colour(self.rgb.into());
                         }
                     } else {
                         ui.label("File picker. Unimplemented");

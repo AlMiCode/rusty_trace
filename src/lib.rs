@@ -19,7 +19,7 @@ mod resource_manager;
 
 pub type Point3 = cgmath::Point3<f64>;
 pub type Vector3 = cgmath::Vector3<f64>;
-pub type Colour = cgmath::Vector3<f64>;
+pub type Colour = cgmath::Vector3<f32>;
 
 pub fn render(
     image: &mut RgbImage,
@@ -42,7 +42,7 @@ pub fn render(
 
                 colour += cast_ray(r, scene, background, materials, textures, depth)
             }
-            let pixel: Rgb<u8> = vec_to_rgb(gamma_correction(colour / sample_count as f64));
+            let pixel: Rgb<u8> = vec_to_rgb(gamma_correction(colour / sample_count as f32));
             image.put_pixel(x, height - y - 1, pixel);
         }
         print!("\r{}/{} done", y + 1, height);
@@ -100,7 +100,7 @@ pub fn vec_to_rgb(vec: Colour) -> Rgb<u8> {
 }
 
 pub fn rgb_to_vec(rgb: &Rgb<u8>) -> Colour {
-    Colour::from(rgb.0.map(|n| n as f64 / 255.0))
+    Colour::from(rgb.0.map(|n| n as f32 / 255.0))
 }
 
 fn random_f64() -> f64 {
