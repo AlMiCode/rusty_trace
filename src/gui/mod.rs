@@ -77,7 +77,7 @@ impl eframe::App for Gui {
 
         // });
         for e in &mut self.elements {
-            e.show(ctx);
+            e.show(ctx, &mut true);
         }
     }
 }
