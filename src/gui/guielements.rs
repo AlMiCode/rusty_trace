@@ -261,10 +261,8 @@ impl GuiElement for SceneEditor {
                     });
                 }
             });
-        // FIXME: Issues with length not updating after element is removed. sometimes causes crash when closing windows
         for i in 0..self.sub_elements.len() {
             let mut is_open = true;
-            println!("index: {}, length: {}", i, self.sub_elements.len());
             self.sub_elements[i].show(ctx, &mut is_open);
             if !is_open {
                 self.sub_elements.remove(i);
