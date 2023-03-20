@@ -30,26 +30,24 @@ pub struct Gui {
 impl Default for Gui {
     fn default() -> Self {
         let mut scene = Scene::default();
-        {
-            let mut camsettings = CameraSettings::default();
-            camsettings.aspect_ratio = 640f64/360f64;
-            scene.add_camera(camsettings);
-            scene.add_camera(camsettings);
-            scene.add_camera(camsettings);
-        }
-        let lambert = Arc::new(Lambertian {
-            albedo: Arc::new(Colour::new(0.5, 0.5, 0.8).into()),
-        });
-        let metal = Arc::new(Metal {
-            albedo: Arc::new(Colour::new(0.8, 0.8, 0.5).into()),
+        scene.add_camera(CameraSettings::default());
+        scene.add_camera(CameraSettings::default());
+        scene.add_camera(CameraSettings::default());
+
+        let blue = scene.add_texture(Box::new(Colour::new(0.8, 0.8, 0.5).into()));
+        let gold = scene.add_texture(Box::new(Colour::new(0.8, 0.8, 0.5).into()));
+        let white_light = scene.add_texture(Box::new(Colour::new(5.0, 5.0, 5.0).into()));
+
+        let lambert = scene.add_material(Box::new(Lambertian { albedo: blue }));
+        let metal = scene.add_material(Box::new(Metal {
+            albedo: gold,
             fuzz: 0.4,
-        });
-        let glass = Arc::new(Dielectric {
+        }));
+        let glass = scene.add_material(Box::new(Dielectric {
             refractive_index: 1.5,
-        });
-        let light = Arc::new(DiffuseLight {
-            emit: Arc::new(Colour::new(5.0, 5.0, 5.0).into()),
-        });
+        }));
+        let light = scene.add_material(Box::new(DiffuseLight { emit: white_light }));
+
         scene.add_shape(Box::new(Sphere::new(point3(-0.5, 0.0, -1.0), 0.5, metal)));
         scene.add_shape(Box::new(Sphere::new(point3(0.5, 0.0, -1.0), 0.5, glass)));
         scene.add_shape(Box::new(Sphere::new(point3(0.0, 2.0, -1.5), 1.0, light)));

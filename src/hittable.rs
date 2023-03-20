@@ -1,6 +1,5 @@
-use std::sync::Arc;
-
 use crate::material::Material;
+use crate::resource_manager::Id;
 use crate::{Point3, Ray, Vector3};
 use cgmath::InnerSpace;
 
@@ -10,7 +9,7 @@ pub struct HitRecord {
     pub distance: f64,
     pub uv: (f64, f64),
     pub front_face: bool,
-    pub material: Arc<dyn Material + Sync + Send>,
+    pub material_id: Id<dyn Material>,
 }
 
 pub trait Hittable {
@@ -39,23 +38,27 @@ impl Hittable for HittableVec {
         result
     }
 
-    fn get_position(&self) -> Point3 { unimplemented!() }
-    fn set_position(&mut self, c: Point3) { unimplemented!() }
+    fn get_position(&self) -> Point3 {
+        unimplemented!()
+    }
+    fn set_position(&mut self, c: Point3) {
+        unimplemented!()
+    }
 }
 
 #[derive(Clone)]
 pub struct Sphere {
     center: Point3,
     radius: f64,
-    material: Arc<dyn Material + Sync + Send>,
+    material_id: Id<dyn Material>,
 }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: f64, material: Arc<dyn Material + Sync + Send>) -> Self {
+    pub fn new(center: Point3, radius: f64, material_id: Id<dyn Material>) -> Self {
         Sphere {
             center,
             radius,
-            material,
+            material_id,
         }
     }
 
@@ -100,13 +103,15 @@ impl Hittable for Sphere {
             distance: root,
             front_face,
             uv: Sphere::get_uv(&outward_normal),
-            material: self.material.clone(),
+            material_id: self.material_id,
         };
 
         Some(result)
     }
 
-    fn get_position(&self) -> Point3 { self.center }
+    fn get_position(&self) -> Point3 {
+        self.center
+    }
     fn set_position(&mut self, c: Point3) {
         self.center = c;
     }

@@ -1,11 +1,12 @@
 use std::sync::Arc;
 use std::sync::RwLock;
 
+use crate::resource_manager::Id;
 use crate::texture::Texture;
 use crate::{render, scene::Scene};
+use egui::color_picker;
 use egui::Color32;
 use egui::ColorImage;
-use egui::color_picker;
 use egui_extras::RetainedImage;
 use image::RgbImage;
 use poll_promise::Promise;
@@ -38,8 +39,11 @@ impl ImageGuiElement {
                     &mut image,
                     &(*scene_value).cameras[cam_index],
                     &(*scene_value).hittable,
-                    &(*scene_value).background,
-                    200,
+                    &(*scene_value).textures.get((*scene_value).background),
+                    &(*scene_value).materials,
+                    &(*scene_value).textures,
+                    5,
+                    30,
                 );
                 RetainedImage::from_color_image(
                     "render",
@@ -94,26 +98,21 @@ impl GuiElement for SceneEditor {
             .show(ctx, |ui| {
                 ui.collapsing("Scene", |ui| {
                     ui.collapsing("Background", |ui| {
-                        ui.vertical(|ui| {
-                            ui.horizontal(|ui| {
-                                ui.label("Current: ");
-                                let reader = scene_clone.read().unwrap();
-                                let tex = &reader.background;
-                                if let Texture::Colour(c) = tex {
-                                    let colour: Color32 = egui::Rgba::from_rgb(c.x as f32, c.y as f32, c.z as f32).into();
-                                    color_picker::show_color(ui, colour, egui::vec2(35.0, 15.0));
-                                } else {
-                                    ui.label("Image. Unimplemented");
-                                }
-                                drop(reader);
-                                if ui.button("Change").clicked() {
-                                    let tex_editor = Box::new(TextureEditor::new(Box::new(|tex, handle| {
-                                        let mut writer = handle.write().unwrap();
-                                        (*writer).background = tex;
-                                    }), self.scene.clone()));
-                                    self.sub_elements.push(tex_editor);
-                                }
-                            });
+                        ui.horizontal(|ui| {
+                            ui.label("Current: ");
+                            let reader = scene_clone.read().unwrap();
+                            let tex = reader.background;
+                            if let Texture::Colour(c) = reader.textures.get(tex) {
+                                let colour: Color32 = egui::Rgba::from_rgb(c.x, c.y, c.z).into();
+                                color_picker::show_color(ui, colour, egui::vec2(35.0, 15.0));
+                            } else {
+                                ui.label("Image. Unimplemented");
+                            }
+                            drop(reader);
+                            if ui.button("Change").clicked() {
+                                let tex_editor = Box::new(TexturesEditor::new(scene_clone.clone()));
+                                self.sub_elements.push(tex_editor);
+                            }
                         });
                     });
                     ui.collapsing("Objects", |ui| {
@@ -153,8 +152,9 @@ impl GuiElement for SceneEditor {
                             ui.horizontal(|ui| {
                                 if ui.button("Render").clicked() {
                                     let guielement = Box::new(ImageGuiElement::new(
-                                        c, self.sub_elements.len(),
-                                        (640, 360),
+                                        c,
+                                        self.sub_elements.len(),
+                                        (400, 400),
                                         &self.scene,
                                         c,
                                     ));
@@ -232,7 +232,6 @@ impl GuiElement for SceneEditor {
                                     ui.label("x:");
                                     drop(reader);
                                     if ui.add(egui::DragValue::new(&mut x)).changed() {
-
                                         let mut writer = scene_clone.write().unwrap();
                                         (*writer).cameras[c].settings.look_from.x = x;
                                         (*writer).cameras[c].update();
@@ -275,16 +274,22 @@ impl GuiElement for SceneEditor {
 }
 
 struct TextureEditor {
+    tex_id: Id<Texture>,
     rgb: [f32; 3],
     image: RgbImage,
     choosing_colour: bool,
-    on_submit: Box<dyn Fn(Texture, &Arc<RwLock<Scene>>)>,
-    scene_handle: Arc<RwLock<Scene>>
+    scene_handle: Arc<RwLock<Scene>>,
 }
 
 impl TextureEditor {
-    fn new(on_submit: Box<dyn Fn(Texture, &Arc<RwLock<Scene>>)>, scene: Arc<RwLock<Scene>>) -> Self {
-        TextureEditor { rgb: [0f32, 0f32, 0f32], image: RgbImage::new(8, 8), choosing_colour: true, on_submit, scene_handle: scene}
+    fn new(tex_id: Id<Texture>, scene_handle: Arc<RwLock<Scene>>) -> Self {
+        TextureEditor {
+            tex_id,
+            rgb: [0f32, 0f32, 0f32],
+            image: RgbImage::new(8, 8),
+            choosing_colour: true,
+            scene_handle,
+        }
     }
 }
 
@@ -292,7 +297,7 @@ impl GuiElement for TextureEditor {
     fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
         let pos = egui::pos2(10.0, 10.0);
 
-        egui::Window::new("Texture Editor")
+        egui::Window::new(format!("Texture {}", self.tex_id))
             .default_pos(pos)
             .open(open)
             .show(ctx, |ui| {
@@ -304,12 +309,78 @@ impl GuiElement for TextureEditor {
                     if self.choosing_colour {
                         egui::color_picker::color_edit_button_rgb(ui, &mut self.rgb);
                         if ui.button("Set").clicked() {
-                            self.on_submit.as_ref()(Texture::Colour(self.rgb.map(|n| n as f64).into()), &self.scene_handle);
+                            let mut writer = self.scene_handle.write().unwrap();
+                            (*(*writer).textures.get_mut(self.tex_id)) =
+                                Texture::Colour(self.rgb.into());
                         }
                     } else {
                         ui.label("File picker. Unimplemented");
                     }
                 });
             });
+    }
+}
+
+struct TexturesEditor {
+    scene_handle: Arc<RwLock<Scene>>,
+    sub_elements: Vec<Box<dyn GuiElement>>,
+}
+
+impl TexturesEditor {
+    fn new(scene_handle: Arc<RwLock<Scene>>) -> Self {
+        TexturesEditor {
+            scene_handle,
+            sub_elements: vec![],
+        }
+    }
+}
+
+impl GuiElement for TexturesEditor {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
+        egui::Window::new("Textures Editor")
+            .open(open)
+            .show(ctx, |ui| {
+                let reader = self.scene_handle.read().unwrap();
+
+                ui.collapsing("Default", |ui| {
+                    ui.horizontal(|ui| {
+                        if let Texture::Colour(c) = reader.textures.get_default() {
+                            ui.label("Colour: ");
+                            let colour: Color32 = egui::Rgba::from_rgb(c.x, c.y, c.z).into();
+                            color_picker::show_color(ui, colour, egui::vec2(35.0, 15.0));
+                        } else {
+                            ui.label("Image: Unimplemented");
+                        }
+                    });
+                });
+
+                for (id, tex) in reader.textures.iter() {
+                    ui.collapsing(format!("Texture {}", id), |ui| {
+                        ui.horizontal(|ui| {
+                            if let Texture::Colour(c) = tex.as_ref() {
+                                ui.label("Colour: ");
+                                let colour: Color32 = egui::Rgba::from_rgb(c.x, c.y, c.z).into();
+                                color_picker::show_color(ui, colour, egui::vec2(35.0, 15.0));
+                            } else {
+                                ui.label("Image: Unimplemented");
+                            }
+                            if ui.button("Change").clicked() {
+                                let tex_editor =
+                                    Box::new(TextureEditor::new(*id, self.scene_handle.clone()));
+                                self.sub_elements.push(tex_editor);
+                            }
+                        });
+                    });
+                }
+            });
+        // FIXME: Issues with length not updating after element is removed. sometimes causes crash when closing windows
+        for i in 0..self.sub_elements.len() {
+            let mut is_open = true;
+            println!("index: {}, length: {}", i, self.sub_elements.len());
+            self.sub_elements[i].show(ctx, &mut is_open);
+            if !is_open {
+                self.sub_elements.remove(i);
+            }
+        }
     }
 }

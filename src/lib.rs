@@ -2,8 +2,9 @@ use camera::Camera;
 use cgmath::{ElementWise, InnerSpace, Zero};
 use hittable::{Hittable, HittableVec, Sphere};
 use image::{Rgb, RgbImage};
+use material::MaterialManager;
 use rand::Rng;
-use texture::Texture;
+use texture::{Texture, TextureManager};
 
 use std::io::Write;
 
@@ -13,18 +14,22 @@ pub mod hittable;
 pub mod material;
 pub mod texture;
 // pub mod renderer;
+mod resource_manager;
 pub mod scene;
 
 pub type Point3 = cgmath::Point3<f64>;
 pub type Vector3 = cgmath::Vector3<f64>;
-pub type Colour = cgmath::Vector3<f64>;
+pub type Colour = cgmath::Vector3<f32>;
 
 pub fn render(
     image: &mut RgbImage,
     camera: &Camera,
     scene: &HittableVec,
     background: &Texture,
+    materials: &MaterialManager,
+    textures: &TextureManager,
     sample_count: u32,
+    depth: u32,
 ) {
     let (width, height) = image.dimensions();
     for y in 0..height {
@@ -35,9 +40,9 @@ pub fn render(
                 let v = y as f64 / (height - 1) as f64;
                 let r = camera.get_ray(u, v);
 
-                colour += cast_ray(r, scene, background, 30)
+                colour += cast_ray(r, scene, background, materials, textures, depth)
             }
-            let pixel: Rgb<u8> = vec_to_rgb(gamma_correction(colour / sample_count as f64));
+            let pixel: Rgb<u8> = vec_to_rgb(gamma_correction(colour / sample_count as f32));
             image.put_pixel(x, height - y - 1, pixel);
         }
         print!("\r{}/{} done", y + 1, height);
@@ -61,19 +66,30 @@ impl Ray {
     }
 }
 
-pub fn cast_ray(ray: Ray, hittable: &dyn Hittable, background: &Texture, depth: u32) -> Colour {
+pub fn cast_ray(
+    ray: Ray,
+    hittable: &dyn Hittable,
+    background: &Texture,
+    materials: &MaterialManager,
+    textures: &TextureManager,
+    depth: u32,
+) -> Colour {
     if depth == 0 {
         return Colour::new(0.0, 0.0, 0.0);
     }
     if let Some(hit) = hittable.hit_bounded(&ray, 0.0001, f64::INFINITY) {
-        let emitted = hit.material.emit(hit.uv.0, hit.uv.1);
-        match hit.material.scatter(&ray, &hit) {
+        let emitted = materials
+            .get(hit.material_id)
+            .emit(hit.uv.0, hit.uv.1, textures);
+        match materials.get(hit.material_id).scatter(&ray, &hit, textures) {
             None => emitted,
             Some(scattered) => {
                 scattered.attenuation.mul_element_wise(cast_ray(
                     scattered.ray,
                     hittable,
                     background,
+                    materials,
+                    textures,
                     depth - 1,
                 )) + emitted
             }
@@ -93,7 +109,7 @@ pub fn vec_to_rgb(vec: Colour) -> Rgb<u8> {
 }
 
 pub fn rgb_to_vec(rgb: &Rgb<u8>) -> Colour {
-    Colour::from(rgb.0.map(|n| n as f64 / 255.0))
+    Colour::from(rgb.0.map(|n| n as f32 / 255.0))
 }
 
 fn random_f64() -> f64 {

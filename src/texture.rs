@@ -1,12 +1,14 @@
 use image::RgbImage;
 
-use crate::{rgb_to_vec, Colour};
+use crate::{resource_manager::ResourceManager, rgb_to_vec, Colour};
 
 #[derive(Clone)]
 pub enum Texture {
     Colour(Colour),
     Image(RgbImage),
 }
+
+pub type TextureManager = ResourceManager<Texture>;
 
 impl Texture {
     pub fn colour_at(&self, u: f64, v: f64) -> Colour {
