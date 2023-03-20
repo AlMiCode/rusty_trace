@@ -11,7 +11,7 @@ use image::RgbImage;
 use poll_promise::Promise;
 
 pub trait GuiElement {
-    fn show(&mut self, ctx: &egui::Context);
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool);
 }
 
 pub struct ImageGuiElement {
@@ -54,10 +54,11 @@ impl ImageGuiElement {
 }
 
 impl GuiElement for ImageGuiElement {
-    fn show(&mut self, ctx: &egui::Context) {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
         let pos = egui::pos2(16.0, 128.0);
         egui::Window::new(&self.title)
             .default_pos(pos)
+            .open(open)
             .show(ctx, |ui| match self.image.ready() {
                 None => ui.spinner(),
                 Some(image) => image.show(ui),
@@ -82,12 +83,13 @@ impl SceneEditor {
 }
 
 impl GuiElement for SceneEditor {
-    fn show(&mut self, ctx: &egui::Context) {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
         let pos = egui::pos2(10.0, 10.0);
         let scene_clone = Arc::clone(&self.scene);
 
         egui::Window::new(&self.title)
             .default_pos(pos)
+            .open(open)
             .vscroll(true)
             .show(ctx, |ui| {
                 ui.collapsing("Scene", |ui| {
@@ -260,8 +262,12 @@ impl GuiElement for SceneEditor {
                     });
                 }
             });
-        for e in &mut self.sub_elements {
-            e.show(ctx);
+        for i in 0..self.sub_elements.len() {
+            let mut is_open = true;
+            self.sub_elements[i].show(ctx, &mut is_open);
+            if !is_open {
+                self.sub_elements.remove(i);
+            }
         }
     }
 }
@@ -281,11 +287,12 @@ impl TextureEditor {
 }
 
 impl GuiElement for TextureEditor {
-    fn show(&mut self, ctx: &egui::Context) {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
         let pos = egui::pos2(10.0, 10.0);
 
         egui::Window::new("Texture Editor")
             .default_pos(pos)
+            .open(open)
             .show(ctx, |ui| {
                 ui.horizontal(|ui| {
                     ui.selectable_value(&mut self.choosing_colour, true, "Colour");

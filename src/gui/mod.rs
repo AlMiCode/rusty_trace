@@ -30,9 +30,13 @@ pub struct Gui {
 impl Default for Gui {
     fn default() -> Self {
         let mut scene = Scene::default();
-        scene.add_camera(CameraSettings::default());
-        scene.add_camera(CameraSettings::default());
-        scene.add_camera(CameraSettings::default());
+        {
+            let mut camsettings = CameraSettings::default();
+            camsettings.aspect_ratio = 640f64/360f64;
+            scene.add_camera(camsettings);
+            scene.add_camera(camsettings);
+            scene.add_camera(camsettings);
+        }
         let lambert = Arc::new(Lambertian {
             albedo: Arc::new(Colour::new(0.5, 0.5, 0.8).into()),
         });
@@ -80,7 +84,7 @@ impl eframe::App for Gui {
 
         // });
         for e in &mut self.elements {
-            e.show(ctx);
+            e.show(ctx, &mut true);
         }
     }
 }
