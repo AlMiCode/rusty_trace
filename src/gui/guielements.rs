@@ -264,7 +264,7 @@ impl GuiElement for SceneEditor {
         // FIXME: Issues with length not updating after element is removed. sometimes causes crash when closing windows
         for i in 0..self.sub_elements.len() {
             let mut is_open = true;
-            println!("index: {}, length: {}", i, self.sub_elements.len());
+            //println!("index: {}, length: {}", i, self.sub_elements.len());
             self.sub_elements[i].show(ctx, &mut is_open);
             if !is_open {
                 self.sub_elements.remove(i);
@@ -316,7 +316,7 @@ impl GuiElement for TextureEditor {
 
 struct TexturesEditor {
     scene_handle: Arc<RwLock<Scene>>,
-    sub_elements: Vec<Box<dyn GuiElement>>,
+    sub_elements: Vec<(Box<dyn GuiElement>, bool)>,
 }
 
 impl TexturesEditor {
@@ -326,8 +326,9 @@ impl TexturesEditor {
 }
 
 impl GuiElement for TexturesEditor {
-    fn show(&mut self, ctx: &egui::Context) {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool) {
         egui::Window::new("Textures Editor")
+            .open(open)
             .show(ctx, |ui| {
                 let reader = self.scene_handle.read().unwrap();
 
@@ -355,14 +356,17 @@ impl GuiElement for TexturesEditor {
                             }
                             if ui.button("Change").clicked() {
                                 let tex_editor = Box::new(TextureEditor::new(*id, self.scene_handle.clone()));
-                                self.sub_elements.push(tex_editor);
+                                self.sub_elements.push((tex_editor, true));
                             }
                         });
                     });
                 }
             });
-            for e in &mut self.sub_elements {
-                e.show(ctx);
+        for (e, is_open) in &mut self.sub_elements {
+            if !(*is_open) {
+            //    self.sub_elements.remove(i);
             }
+            e.show(ctx, is_open);
+        }
     }
 }
