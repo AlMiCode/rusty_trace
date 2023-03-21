@@ -73,7 +73,7 @@ impl GuiElement for ImageGuiElement {
 pub struct SceneEditor {
     title: String,
     scene: Arc<RwLock<Scene>>,
-    sub_elements: Vec<Box<dyn GuiElement>>,
+    sub_elements: Vec<(Box<dyn GuiElement>, bool)>,
 }
 
 impl SceneEditor {
@@ -111,7 +111,7 @@ impl GuiElement for SceneEditor {
                             drop(reader);
                             if ui.button("Change").clicked() {
                                 let tex_editor = Box::new(TexturesEditor::new(scene_clone.clone()));
-                                self.sub_elements.push(tex_editor);
+                                self.sub_elements.push((tex_editor, true));
                             }
                         });
                     });
@@ -158,7 +158,7 @@ impl GuiElement for SceneEditor {
                                         &self.scene,
                                         c,
                                     ));
-                                    self.sub_elements.push(guielement);
+                                    self.sub_elements.push((guielement, true));
                                 }
                             });
                         }
@@ -262,13 +262,9 @@ impl GuiElement for SceneEditor {
                 }
             });
         // FIXME: Issues with length not updating after element is removed. sometimes causes crash when closing windows
-        for i in 0..self.sub_elements.len() {
-            let mut is_open = true;
-            //println!("index: {}, length: {}", i, self.sub_elements.len());
-            self.sub_elements[i].show(ctx, &mut is_open);
-            if !is_open {
-                self.sub_elements.remove(i);
-            }
+        self.sub_elements = self.sub_elements.drain(..).filter(|(_e, is_open)| *is_open).collect();
+        for (e, is_open) in &mut self.sub_elements {
+            e.show(ctx, is_open);
         }
     }
 }
@@ -372,11 +368,9 @@ impl GuiElement for TexturesEditor {
                     });
                 }
             });
-        for (e, is_open) in &mut self.sub_elements {
-            if !(*is_open) {
-            //    self.sub_elements.remove(i);
+            self.sub_elements = self.sub_elements.drain(..).filter(|(_e, is_open)| *is_open).collect();
+            for (e, is_open) in &mut self.sub_elements {
+                e.show(ctx, is_open);
             }
-            e.show(ctx, is_open);
-        }
     }
 }
