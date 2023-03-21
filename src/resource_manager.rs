@@ -1,11 +1,7 @@
-use std::collections::hash_map::Iter;
-use std::{
-    collections::HashMap,
-    fmt::Display,
-    hash::Hash,
-    marker::PhantomData,
-    sync::atomic::{AtomicU32, Ordering},
-};
+use std::{sync::atomic::{AtomicU32, Ordering}, marker::PhantomData, hash::Hash, fmt::Display};
+use indexmap::map::Iter;
+
+use indexmap::IndexMap;
 
 #[repr(transparent)]
 pub struct Id<T: ?Sized> {
@@ -74,7 +70,7 @@ where
 }
 
 pub struct ResourceManager<T: ?Sized> {
-    resources: HashMap<Id<T>, Box<T>>,
+    resources: IndexMap<Id<T>, Box<T>>,
     default_value: Box<T>,
 }
 
@@ -83,10 +79,7 @@ where
     T: ?Sized,
 {
     pub fn new(default_value: Box<T>) -> Self {
-        Self {
-            resources: HashMap::new(),
-            default_value,
-        }
+        Self { resources: IndexMap::new(), default_value }
     }
 
     pub fn get_default(&self) -> &T {
