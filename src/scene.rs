@@ -1,23 +1,24 @@
 use crate::{
     camera::{Camera, CameraSettings},
     hittable::{Hittable, HittableVec},
-    texture::{Texture, TextureManager},
-    Colour, material::{MaterialManager, Lambertian, Material}, resource_manager::Id,
+    texture::Texture,
+    Colour, material::{Lambertian, Material}, repo::{Id, Repo},
 };
 
+#[derive(Clone)]
 pub struct Scene {
     pub hittable: HittableVec,
     pub cameras: Vec<Camera>,
     pub background: Id<Texture>,
-    pub materials: MaterialManager,
-    pub textures: TextureManager
+    pub materials: Repo<dyn Material>,
+    pub textures: Repo<Texture>
 }
 
 impl Default for Scene {
     fn default() -> Self {
         let background: Texture = Colour::new(0.1, 0.65, 0.9).into();
         let gray: Texture = Colour::new(0.5, 0.5, 0.5).into();
-        let mut textures = TextureManager::new(Box::new(gray));
+        let mut textures = Repo::new(Box::new(gray));
         let id = Id::new();
         textures.insert(id, Box::new(background.clone()));
         let default_mat = Box::new(Lambertian{albedo: id});
@@ -25,7 +26,7 @@ impl Default for Scene {
             hittable: HittableVec::new(),
             cameras: vec![],
             background: id,
-            materials: MaterialManager::new(default_mat),
+            materials: Repo::new(default_mat),
             textures
         }
     }

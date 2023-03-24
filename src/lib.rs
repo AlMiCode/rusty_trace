@@ -2,9 +2,10 @@ use camera::Camera;
 use cgmath::{ElementWise, InnerSpace, Zero};
 use hittable::{Hittable, HittableVec, Sphere};
 use image::{Rgb, RgbImage};
-use material::MaterialManager;
+use material::Material;
 use rand::Rng;
-use texture::{Texture, TextureManager};
+use repo::Repo;
+use texture::Texture;
 
 use std::io::Write;
 
@@ -15,7 +16,7 @@ pub mod material;
 pub mod texture;
 // pub mod renderer;
 pub mod scene;
-mod resource_manager;
+mod repo;
 
 pub type Point3 = cgmath::Point3<f64>;
 pub type Vector3 = cgmath::Vector3<f64>;
@@ -26,8 +27,8 @@ pub fn render(
     camera: &Camera,
     scene: &HittableVec,
     background: &Texture,
-    materials: &MaterialManager,
-    textures: &TextureManager,
+    materials: &Repo<dyn Material>,
+    textures: &Repo<Texture>,
     sample_count: u32,
     depth: u32
 ) {
@@ -66,7 +67,7 @@ impl Ray {
     }
 }
 
-pub fn cast_ray(ray: Ray, hittable: &dyn Hittable, background: &Texture, materials: &MaterialManager, textures: &TextureManager, depth: u32) -> Colour {
+pub fn cast_ray(ray: Ray, hittable: &dyn Hittable, background: &Texture, materials: &Repo<dyn Material>, textures: &Repo<Texture>, depth: u32) -> Colour {
     if depth == 0 {
         return Colour::new(0.0, 0.0, 0.0);
     }
