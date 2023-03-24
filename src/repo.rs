@@ -1,9 +1,13 @@
-use std::{sync::atomic::{AtomicU32, Ordering}, marker::PhantomData, hash::Hash, fmt::Display};
-use indexmap::map::Iter;
+use indexmap::map::{Iter, IterMut};
+use std::{
+    fmt::Display,
+    hash::Hash,
+    marker::PhantomData,
+    sync::atomic::{AtomicU32, Ordering},
+};
 
 use indexmap::IndexMap;
 
-#[repr(transparent)]
 pub struct Id<T: ?Sized> {
     id: u32,
     phantom: PhantomData<T>,
@@ -51,6 +55,16 @@ where
     }
 }
 
+impl<T> Default for Id<T>
+where
+    T: ?Sized,
+{
+    fn default() -> Self {
+        Id::from(0)
+    }
+}
+
+
 impl<T> Id<T>
 where
     T: ?Sized,
@@ -69,21 +83,30 @@ where
     }
 }
 
-pub struct ResourceManager<T: ?Sized> {
+
+
+pub struct Repo<T: ?Sized> {
     resources: IndexMap<Id<T>, Box<T>>,
     default_value: Box<T>,
 }
 
-impl<T> ResourceManager<T>
+impl<T> Repo<T>
 where
     T: ?Sized,
 {
     pub fn new(default_value: Box<T>) -> Self {
-        Self { resources: IndexMap::new(), default_value }
+        Self {
+            resources: IndexMap::new(),
+            default_value,
+        }
     }
 
     pub fn get_default(&self) -> &T {
         &self.default_value
+    }
+
+    pub fn get_defaul_mut(&mut self) -> &mut T {
+        &mut self.default_value
     }
 
     pub fn get(&self, id: Id<T>) -> &T {
@@ -106,5 +129,19 @@ where
 
     pub fn iter(&self) -> Iter<'_, Id<T>, Box<T>> {
         self.resources.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> IterMut<'_, Id<T>, Box<T>> {
+        self.resources.iter_mut()
+    }
+}
+
+impl<T> Clone for Repo<T>
+where
+    T: ?Sized,
+    Box<T>: Clone
+{
+    fn clone(&self) -> Self {
+        Self { resources: self.resources.clone(), default_value: self.default_value.clone() }
     }
 }

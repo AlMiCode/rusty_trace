@@ -1,13 +1,14 @@
 use crate::{random_vec_in_disc, Point3, Ray, Vector3};
 use cgmath::{point3, vec3, InnerSpace};
 
+#[derive(Clone)]
 pub struct Camera {
     origin: Point3,
     lower_left_corner: Point3,
     horizontal: Vector3,
     vertical: Vector3,
 
-    w: Vector3,
+    _w: Vector3,
     u: Vector3,
     v: Vector3,
 
@@ -47,14 +48,14 @@ impl Camera {
         let viewport_width = s.aspect_ratio * viewport_height;
         let focus_dist = (s.look_from - s.look_at).magnitude();
 
-        let w = (s.look_from - s.look_at).normalize();
-        let u = s.up_vec.cross(w);
-        let v = w.cross(u);
+        let _w = (s.look_from - s.look_at).normalize();
+        let u = s.up_vec.cross(_w);
+        let v = _w.cross(u);
 
         let origin = s.look_from;
         let horizontal = u * viewport_width * focus_dist;
         let vertical = v * viewport_height * focus_dist;
-        let lower_left_corner = origin - horizontal / 2.0 - vertical / 2.0 - w * focus_dist;
+        let lower_left_corner = origin - horizontal / 2.0 - vertical / 2.0 - _w * focus_dist;
 
         let lens_radius = s.aperture / 2.0;
         println!("{}", lens_radius);
@@ -64,7 +65,7 @@ impl Camera {
             lower_left_corner,
             horizontal,
             vertical,
-            w,
+            _w,
             u,
             v,
             lens_radius,

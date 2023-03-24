@@ -1,5 +1,5 @@
 use crate::material::Material;
-use crate::resource_manager::Id;
+use crate::repo::Id;
 use crate::{Point3, Ray, Vector3};
 use cgmath::InnerSpace;
 
@@ -12,7 +12,7 @@ pub struct HitRecord {
     pub material_id: Id<dyn Material>,
 }
 
-pub trait Hittable {
+pub trait Hittable: Sync + Send + HittableClone {
     fn hit_bounded(&self, ray: &Ray, min_dist: f64, max_dist: f64) -> Option<HitRecord>;
     fn hit(&self, ray: &Ray) -> Option<HitRecord> {
         self.hit_bounded(ray, f64::EPSILON, f64::INFINITY)
@@ -20,7 +20,27 @@ pub trait Hittable {
     fn get_position(&self) -> Point3;
     fn set_position(&mut self, c: Point3);
 }
-pub type HittableVec = Vec<Box<dyn Hittable + Sync + Send>>;
+pub type HittableVec = Vec<Box<dyn Hittable>>;
+
+pub trait HittableClone {
+    fn clone_box(&self) -> Box<dyn Hittable>;
+}
+
+impl<T> HittableClone for T
+where
+    T: 'static + Hittable + Clone,
+{
+    fn clone_box(&self) -> Box<dyn Hittable> {
+        Box::new(self.clone())
+    }
+}
+
+// We can now implement Clone manually by forwarding to clone_box.
+impl Clone for Box<dyn Hittable> {
+    fn clone(&self) -> Box<dyn Hittable> {
+        self.clone_box()
+    }
+}
 
 impl Hittable for HittableVec {
     fn hit_bounded(&self, ray: &Ray, min_dist: f64, max_dist: f64) -> Option<HitRecord> {
@@ -38,12 +58,8 @@ impl Hittable for HittableVec {
         result
     }
 
-    fn get_position(&self) -> Point3 {
-        unimplemented!()
-    }
-    fn set_position(&mut self, c: Point3) {
-        unimplemented!()
-    }
+    fn get_position(&self) -> Point3 { unimplemented!() }
+    fn set_position(&mut self, _c: Point3) { unimplemented!() }
 }
 
 #[derive(Clone)]

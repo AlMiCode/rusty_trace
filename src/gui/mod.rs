@@ -8,8 +8,7 @@ use crate::{
     Colour,
 };
 
-use std::sync::Arc;
-use std::sync::RwLock;
+use std::{cell::RefCell, rc::Rc};
 
 use cgmath::point3;
 use eframe::egui;
@@ -56,8 +55,8 @@ impl Default for Gui {
             20.0,
             lambert,
         )));
-        let scene_arc = Arc::new(RwLock::new(scene));
-        let scene_editor = SceneEditor::new(String::from("Scene editor"), scene_arc);
+        let scene_rc = Rc::new(RefCell::new(scene));
+        let scene_editor = SceneEditor::new(String::from("Scene editor"), scene_rc);
         Self {
             elements: vec![Box::new(scene_editor)],
         }
@@ -82,7 +81,7 @@ impl eframe::App for Gui {
 
         // });
         for e in &mut self.elements {
-            e.show(ctx, &mut true);
+            e.show(ctx);
         }
     }
 }
