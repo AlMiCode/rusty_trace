@@ -103,7 +103,7 @@ impl GuiElement for SceneEditor {
                 ui.group(|ui|{
                     if ui.link("Objects").clicked() {};
                     if ui.link("Materials").clicked() {};
-                    if ui.link("Textutes").clicked() {
+                    if ui.link("Textures").clicked() {
                         self.texture_editor.is_open = true;
                     }
                 });
