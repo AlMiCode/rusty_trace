@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use image::RgbImage;
 
 use crate::{rgb_to_vec, Colour};
@@ -5,7 +7,7 @@ use crate::{rgb_to_vec, Colour};
 #[derive(Clone)]
 pub enum Texture {
     Colour(Colour),
-    Image(RgbImage),
+    Image(Arc<RgbImage>),
 }
 
 impl Texture {
@@ -32,8 +34,8 @@ impl From<Colour> for Texture {
     }
 }
 
-impl From<RgbImage> for Texture {
-    fn from(value: RgbImage) -> Self {
+impl From<Arc<RgbImage>> for Texture {
+    fn from(value: Arc<RgbImage>) -> Self {
         Texture::Image(value)
     }
 }

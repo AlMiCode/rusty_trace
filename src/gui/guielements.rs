@@ -1,14 +1,16 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::repo::Id;
 use crate::texture::Texture;
 use crate::{render, scene::Scene};
 use egui::color_picker::{color_edit_button_rgb, show_color};
-use egui::Color32;
+use egui::{Color32, Vec2};
 use egui::ColorImage;
 use egui_extras::RetainedImage;
 use image::RgbImage;
+use indexmap::IndexMap;
 use poll_promise::Promise;
 
 pub trait GuiElement {
@@ -263,10 +265,17 @@ impl GuiElement for SceneEditor {
 
 struct TextureEditor {
     scene: Rc<RefCell<Scene>>,
+    // Editor
     edited_id: Option<Id<Texture>>,
-    rgb: [f32; 3],
-    //image: RgbImage,
+    edited_rgb: [f32; 3],
+    edited_image: Option<Arc<RgbImage>>,
     choosing_colour: bool,
+
+    //RetaindedImage storage. Possibly moved into its own window.
+    images: RefCell<IndexMap<Arc<RgbImage>, (String, RetainedImage)>>,
+    fallback: (String, RetainedImage),
+
+    //Window
     pub is_open: bool,
 }
 
@@ -275,9 +284,11 @@ impl TextureEditor {
         TextureEditor {
             scene,
             edited_id: None,
-            rgb: [0f32, 0f32, 0f32],
-            //image: RgbImage::new(4, 4),
+            edited_rgb: [0f32, 0f32, 0f32],
+            edited_image: None,
             choosing_colour: true,
+            images: RefCell::new(IndexMap::new()),
+            fallback: ("Fallback".to_string(), RetainedImage::from_color_image("Fallback", ColorImage::example())),
             is_open: true,
         }
     }
@@ -285,7 +296,7 @@ impl TextureEditor {
 
 impl GuiElement for TextureEditor {
     fn show(&mut self, ctx: &egui::Context) {
-        egui::Window::new("Textures Editor")
+        egui::Window::new("Textures")
             .open(&mut self.is_open)
             .show(ctx, |ui| {
                 ui.group(|ui| {
@@ -295,8 +306,11 @@ impl GuiElement for TextureEditor {
                             ui.label("Colour: ");
                             let colour: Color32 = egui::Rgba::from_rgb(c.x, c.y, c.z).into();
                             show_color(ui, colour, egui::vec2(35.0, 15.0));
-                        } else {
-                            ui.label("Image: Unimplemented");
+                        } else if let Texture::Image(img) = self.scene.borrow().textures.get_default() {
+                            let images_ref = self.images.borrow();
+                            let (name, ret_img) = images_ref.get(img).unwrap_or(&self.fallback);
+                            ui.label(format!("Image: {}", name));
+                            ret_img.show_size(ui, Vec2::new(100f32, 100f32));
                         }
                     });
                 });
@@ -310,14 +324,19 @@ impl GuiElement for TextureEditor {
                                 ui.label("Colour: ");
                                 let colour: Color32 = egui::Rgba::from_rgb(c.x, c.y, c.z).into();
                                 show_color(ui, colour, egui::vec2(35.0, 15.0));
-                            } else {
-                                ui.label("Image: Unimplemented");
+                            } else if let Texture::Image(img) = tex.as_ref() {
+                                let images_ref = self.images.borrow();
+                                let (name, ret_img) = images_ref.get(img).unwrap_or(&self.fallback);
+                                ui.label(format!("Image: {}", name));
+                                ret_img.show_size(ui, Vec2::new(100f32, 100f32));
                             }
                             if ui.button("Change").clicked() {
                                 self.edited_id = Some(*id);
                                 if let Texture::Colour(c) = tex.as_ref() {
                                     self.choosing_colour = true;
-                                    self.rgb = [c.x, c.y, c.z];
+                                    self.edited_rgb = [c.x, c.y, c.z];
+                                } else if let Texture::Image(img) = tex.as_ref() {
+                                    self.edited_image = Some(img.clone());
                                 }
                             }
                         });
@@ -329,12 +348,43 @@ impl GuiElement for TextureEditor {
                                 });
                                 ui.horizontal(|ui| {
                                     if self.choosing_colour {
-                                        color_edit_button_rgb(ui, &mut self.rgb);
+                                        color_edit_button_rgb(ui, &mut self.edited_rgb);
                                         if ui.button("Set").clicked() {
-                                            *tex.as_mut() = Texture::Colour(self.rgb.into());
+                                            *tex.as_mut() = Texture::Colour(self.edited_rgb.into());
                                         }
                                     } else {
-                                        ui.label("File picker. Unimplemented");
+                                        if let Some(img) = &self.edited_image {
+                                            let images_ref = self.images.borrow();
+                                            let (name, ret_img) = images_ref.get(img).unwrap_or(&self.fallback);
+                                            ui.label(format!("Image: {}", name));
+                                            ret_img.show_size(ui, Vec2::new(100f32, 100f32));
+                                        }
+                                        else {
+                                            ui.label("No image yet");
+                                        }
+
+                                        if ui.button("Open file...").clicked() {
+                                            if let Some(path) = rfd::FileDialog::new().pick_file() {
+                                                let picked_path = path.display().to_string();
+                                                if let Ok(Ok(dyn_img)) = image::io::Reader::open(&picked_path).and_then(|reader| Ok(reader.decode())) {
+                                                    let image = dyn_img.as_rgb8().unwrap().to_owned();
+                                                    let image_arc: Arc<RgbImage> = Arc::new(image);
+                                                    self.edited_image = Some(image_arc.clone());
+                                                    self.images.borrow_mut().insert(image_arc.clone(), (picked_path, RetainedImage::from_color_image(
+                                                        "opened file",
+                                                        ColorImage::from_rgb(
+                                                            [image_arc.width() as usize, image_arc.height() as usize],
+                                                            image_arc.as_raw(),
+                                                        ),
+                                                    )));
+                                                }
+                                            }
+                                        }
+                                        if ui.button("Set").clicked() {
+                                            if let Some(img) = &self.edited_image {
+                                                *tex.as_mut() = Texture::Image(img.clone());
+                                            }
+                                        }
                                     }
                                     if ui.button("Cancel").clicked() {
                                         self.edited_id = None;
