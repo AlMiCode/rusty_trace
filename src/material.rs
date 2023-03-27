@@ -1,7 +1,8 @@
 use cgmath::{InnerSpace, Zero};
+use image::RgbImage;
 
 use crate::hittable::HitRecord;
-use crate::repo::{Repo, Id};
+use crate::repo::{Repo, Id, ARepo};
 use crate::texture::Texture;
 use crate::{random_f64, random_vec_in_sphere, Colour, Ray, Vector3};
 
@@ -22,8 +23,8 @@ pub struct ScatterRecord {
 }
 
 pub trait Material: Sync + Send + MaterialClone {
-    fn scatter(&self, ray: &Ray, hit: &HitRecord, textures: &Repo<Texture>) -> Option<ScatterRecord>;
-    fn emit(&self, _u: f64, _v: f64, _textures: &Repo<Texture>) -> Colour {
+    fn scatter(&self, ray: &Ray, hit: &HitRecord, textures: &Repo<Texture>, images: &ARepo<RgbImage>) -> Option<ScatterRecord>;
+    fn emit(&self, _u: f64, _v: f64, _textures: &Repo<Texture>, _images: &ARepo<RgbImage>) -> Colour {
         Colour::zero()
     }
 }
@@ -72,7 +73,7 @@ pub struct Isotropic {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, _ray: &Ray, hit: &HitRecord, textures: &Repo<Texture>) -> Option<ScatterRecord> {
+    fn scatter(&self, _ray: &Ray, hit: &HitRecord, textures: &Repo<Texture>, images: &ARepo<RgbImage>) -> Option<ScatterRecord> {
         let scatter_dir = hit.normal + random_vec_in_sphere();
         let scatter_dir = if scatter_dir.magnitude2() < 0.000001 {
             hit.normal
@@ -81,18 +82,18 @@ impl Material for Lambertian {
         };
         Some(ScatterRecord {
             ray: Ray::new(hit.point, scatter_dir),
-            attenuation: textures.get(self.albedo).colour_at(hit.uv.0, hit.uv.1),
+            attenuation: textures.get(self.albedo).colour_at(hit.uv.0, hit.uv.1, images),
         })
     }
 }
 
 impl Material for Metal {
-    fn scatter(&self, ray: &Ray, hit: &HitRecord, textures: &Repo<Texture>) -> Option<ScatterRecord> {
+    fn scatter(&self, ray: &Ray, hit: &HitRecord, textures: &Repo<Texture>, images: &ARepo<RgbImage>) -> Option<ScatterRecord> {
         let dir = reflect(&ray.direction, &hit.normal) + random_vec_in_sphere() * self.fuzz;
         if dir.dot(hit.normal) > 0.0 {
             Some(ScatterRecord {
                 ray: Ray::new(hit.point, dir),
-                attenuation: textures.get(self.albedo).colour_at(hit.uv.0, hit.uv.1),
+                attenuation: textures.get(self.albedo).colour_at(hit.uv.0, hit.uv.1, images),
             })
         } else {
             None
@@ -109,7 +110,7 @@ impl Dielectric {
 }
 
 impl Material for Dielectric {
-    fn scatter(&self, ray: &Ray, hit: &HitRecord, _textures: &Repo<Texture>) -> Option<ScatterRecord> {
+    fn scatter(&self, ray: &Ray, hit: &HitRecord, _textures: &Repo<Texture>, _images: &ARepo<RgbImage>) -> Option<ScatterRecord> {
         let refraction_ratio = if hit.front_face {
             1.0 / self.refractive_index
         } else {
@@ -134,19 +135,19 @@ impl Material for Dielectric {
 }
 
 impl Material for DiffuseLight {
-    fn scatter(&self, _ray: &Ray, _hit: &HitRecord, _textures: &Repo<Texture>) -> Option<ScatterRecord> {
+    fn scatter(&self, _ray: &Ray, _hit: &HitRecord, _textures: &Repo<Texture>, _images: &ARepo<RgbImage>) -> Option<ScatterRecord> {
         None
     }
-    fn emit(&self, u: f64, v: f64, textures: &Repo<Texture>) -> Colour {
-        textures.get(self.emit).colour_at(u, v)
+    fn emit(&self, u: f64, v: f64, textures: &Repo<Texture>, images: &ARepo<RgbImage>) -> Colour {
+        textures.get(self.emit).colour_at(u, v, images)
     }
 }
 
 impl Material for Isotropic {
-    fn scatter(&self, _ray: &Ray, hit: &HitRecord, textures: &Repo<Texture>) -> Option<ScatterRecord> {
+    fn scatter(&self, _ray: &Ray, hit: &HitRecord, textures: &Repo<Texture>, images: &ARepo<RgbImage>) -> Option<ScatterRecord> {
         Some(ScatterRecord {
             ray: Ray::new(hit.point, random_vec_in_sphere()),
-            attenuation: textures.get(self.albedo).colour_at(hit.uv.0, hit.uv.1),
+            attenuation: textures.get(self.albedo).colour_at(hit.uv.0, hit.uv.1, images),
         })
     }
 }
