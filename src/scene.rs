@@ -1,8 +1,12 @@
+use std::{sync::Arc, cell::RefCell};
+
+use image::RgbImage;
+
 use crate::{
     camera::{Camera, CameraSettings},
     hittable::{Hittable, HittableVec},
     texture::Texture,
-    Colour, material::{Lambertian, Material}, repo::{Id, Repo},
+    Colour, material::{Lambertian, Material}, repo::{Id, Repo, ARepo},
 };
 
 #[derive(Clone)]
@@ -11,7 +15,8 @@ pub struct Scene {
     pub cameras: Vec<Camera>,
     pub background: Id<Texture>,
     pub materials: Repo<dyn Material>,
-    pub textures: Repo<Texture>
+    pub textures: RefCell<Repo<Texture>>,
+    pub images: RefCell<ARepo<RgbImage>>
 }
 
 impl Default for Scene {
@@ -21,13 +26,16 @@ impl Default for Scene {
         let mut textures = Repo::new(Box::new(gray));
         let id = Id::new();
         textures.insert(id, Box::new(background.clone()));
-        let default_mat = Box::new(Lambertian { albedo: id });
+        let default_mat = Box::new(Lambertian{albedo: id});
+
+        let default_img = Arc::new(RgbImage::new(4, 4));
         Self {
             hittable: HittableVec::new(),
             cameras: vec![],
             background: id,
             materials: Repo::new(default_mat),
-            textures
+            textures: RefCell::new(textures),
+            images: RefCell::new(ARepo::new(default_img))
         }
     }
 }
@@ -47,9 +55,15 @@ impl Scene {
         id
     }
 
-    pub fn add_texture(&mut self, texture: Box<Texture>) -> Id<Texture> {
+    pub fn add_texture(&self, texture: Box<Texture>) -> Id<Texture> {
         let id = Id::new();
-        self.textures.insert(id, texture);
+        self.textures.borrow_mut().insert(id, texture);
+        id
+    }
+
+    pub fn add_image(&self, image: Arc<RgbImage>) -> Id<RgbImage> {
+        let id = Id::new();
+        self.images.borrow_mut().insert(id, image);
         id
     }
 }

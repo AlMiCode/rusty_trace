@@ -3,7 +3,7 @@ use std::{
     fmt::Display,
     hash::Hash,
     marker::PhantomData,
-    sync::atomic::{AtomicU32, Ordering},
+    sync::{atomic::{AtomicU32, Ordering}, Arc}, ops::{Deref, DerefMut},
 };
 
 use indexmap::IndexMap;
@@ -84,17 +84,20 @@ where
 }
 
 
+pub type Repo<T> = Repository<T, Box<T>>;
+pub type ARepo<T> = Repository<T, Arc<T>>;
 
-pub struct Repo<T: ?Sized> {
-    resources: IndexMap<Id<T>, Box<T>>,
-    default_value: Box<T>,
+pub struct Repository<Type: ?Sized, ContainedType: Deref<Target = Type>> {
+    resources: IndexMap<Id<Type>, ContainedType>,
+    default_value: ContainedType,
 }
 
-impl<T> Repo<T>
+impl<T, C> Repository<T, C>
 where
     T: ?Sized,
+    C: Deref<Target = T>
 {
-    pub fn new(default_value: Box<T>) -> Self {
+    pub fn new(default_value: C) -> Self {
         Self {
             resources: IndexMap::new(),
             default_value,
@@ -105,12 +108,26 @@ where
         &self.default_value
     }
 
-    pub fn get_defaul_mut(&mut self) -> &mut T {
-        &mut self.default_value
-    }
-
     pub fn get(&self, id: Id<T>) -> &T {
         self.resources.get(&id).unwrap_or(&self.default_value)
+    }
+
+    pub fn insert(&mut self, id: Id<T>, value: C) {
+        self.resources.insert(id, value);
+    }
+
+    pub fn iter(&self) -> Iter<'_, Id<T>, C> {
+        self.resources.iter()
+    }
+}
+
+impl<T, C> Repository<T, C>
+where
+    T: ?Sized,
+    C: Deref<Target = T> + DerefMut<Target = T>
+{
+    pub fn get_defaul_mut(&mut self) -> &mut T {
+        &mut self.default_value
     }
 
     pub fn get_mut(&mut self, id: Id<T>) -> &mut T {
@@ -119,29 +136,17 @@ where
             .unwrap_or(&mut self.default_value)
     }
 
-    pub fn insert(&mut self, id: Id<T>, value: Box<T>) {
-        self.resources.insert(id, value);
-    }
-
-    pub fn remove(&mut self, id: Id<T>) -> Option<Box<T>> {
-        self.resources.remove(&id)
-    }
-
-    pub fn iter(&self) -> Iter<'_, Id<T>, Box<T>> {
-        self.resources.iter()
-    }
-
-    pub fn iter_mut(&mut self) -> IterMut<'_, Id<T>, Box<T>> {
+    pub fn iter_mut(&mut self) -> IterMut<'_, Id<T>, C> {
         self.resources.iter_mut()
     }
 }
 
-impl<T> Clone for Repo<T>
+impl<T, C> Clone for Repository<T, C>
 where
     T: ?Sized,
-    Box<T>: Clone
+    C: Deref<Target = T> + Clone
 {
     fn clone(&self) -> Self {
-        Self { resources: self.resources.clone(), default_value: self.default_value.clone() }
+        Repository { resources: self.resources.clone(), default_value: self.default_value.clone() }
     }
 }
