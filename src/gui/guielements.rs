@@ -2,11 +2,11 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
 
-use crate::repo::Id;
+use crate::repo::{Id, Repo};
 use crate::texture::Texture;
 use crate::{render, scene::Scene};
 use egui::color_picker::{color_edit_button_rgb, show_color};
-use egui::{Color32, Vec2};
+use egui::{Color32, Vec2, Ui};
 use egui::ColorImage;
 use egui_extras::RetainedImage;
 use image::RgbImage;
@@ -113,23 +113,9 @@ impl GuiElement for SceneEditor {
                 ui.collapsing("Scene", |ui| {
                     ui.collapsing("Background", |ui| {
                         ui.horizontal(|ui| {
-                            let tex = self.scene.borrow().background;
-                            let mut new_background = tex;
-                            egui::ComboBox::from_label("")
-                            .selected_text(format!("Texture {}", tex))
-                            .show_ui(ui, |ui|{
-                                ui.selectable_value(&mut new_background, Id::default(), "Default");
-                                for (option, _tex) in self.scene.borrow().textures.borrow().iter() {
-                                    ui.selectable_value(&mut new_background, *option, format!("Texture {}", option));
-                                }
-                            });
-                            if let Texture::Colour(c) = self.scene.borrow().textures.borrow().get(tex) {
-                                let colour: Color32 = egui::Rgba::from_rgb(c.x, c.y, c.z).into();
-                                show_color(ui, colour, egui::vec2(35.0, 15.0));
-                            } else {
-                                ui.label("Image. Unimplemented");
-                            }
-                            self.scene.borrow_mut().background = new_background;
+                            let mut background = self.scene.borrow().background;
+                            texture_picker(ui, &mut background, &self.scene.borrow().textures.borrow());
+                            self.scene.borrow_mut().background = background;
                         });
                     });
                     ui.collapsing("Objects", |ui| {
@@ -262,7 +248,24 @@ impl GuiElement for SceneEditor {
     }
 }
 
-
+fn texture_picker(ui: &mut Ui, tex_id: &mut Id<Texture>, repo: &Repo<Texture>) {
+    let mut new_tex = *tex_id;
+    egui::ComboBox::from_label("")
+    .selected_text(format!("Texture {}", new_tex))
+    .show_ui(ui, |ui|{
+        ui.selectable_value(&mut new_tex, Id::default(), "Default");
+        for (option, _tex) in repo.iter() {
+            ui.selectable_value::<Id<Texture>>(&mut new_tex, *option, format!("Texture {}", option));
+        }
+    });
+    if let Texture::Colour(c) = repo.get(new_tex) {
+        let colour: Color32 = egui::Rgba::from_rgb(c.x, c.y, c.z).into();
+        show_color(ui, colour, egui::vec2(35.0, 15.0));
+    } else {
+        ui.label("Image");
+    }
+    *tex_id = new_tex;
+}
 
 struct TextureEditor {
     scene: Rc<RefCell<Scene>>,
