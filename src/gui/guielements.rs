@@ -2,11 +2,12 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
 
+use crate::Point3;
 use crate::repo::{Id, Repo};
 use crate::texture::Texture;
 use crate::{render, scene::Scene};
 use egui::color_picker::{color_edit_button_rgb, show_color};
-use egui::{Color32, Vec2, Ui};
+use egui::{Color32, Vec2, Ui, Response};
 use egui::ColorImage;
 use egui_extras::RetainedImage;
 use image::RgbImage;
@@ -123,19 +124,11 @@ impl GuiElement for SceneEditor {
                         for i in 0..hittable_len {
                             ui.collapsing(format!("Sphere {i}"), |ui| {
                                 ui.label("Position");
-                                ui.horizontal(|ui| {
-                                    let mut c = self.scene.borrow().hittable[i].as_ref().get_position();
-                                    ui.label("X: ");
-                                    let x = ui.add(egui::DragValue::new(&mut c.x)).changed();
-                                    ui.label("Y: ");
-                                    let y = ui.add(egui::DragValue::new(&mut c.y)).changed();
-                                    ui.label("z: ");
-                                    let z = ui.add(egui::DragValue::new(&mut c.z)).changed();
-                                    if x || y || z {
-                                        let mut scene_ref_mut = self.scene.borrow_mut();
-                                        scene_ref_mut.hittable[i].as_mut().set_position(c);
-                                    }
-                                })
+                                let mut c = self.scene.borrow().hittable[i].as_ref().get_position();
+                                if point3_editor(ui, &mut c).changed() {
+                                    let mut scene_ref_mut = self.scene.borrow_mut();
+                                    scene_ref_mut.hittable[i].as_mut().set_position(c);
+                                }
                             });
                         }
                     })
@@ -161,8 +154,8 @@ impl GuiElement for SceneEditor {
                         {
                             ui.horizontal(|ui| {
                                 let mut fov: f64 = self.scene.borrow().cameras[c].settings.fov;
-                                ui.label("Fov:");
-                                if ui.add(egui::DragValue::new(&mut fov)).changed() {
+                                ui.label("FOV:");
+                                if ui.add(egui::DragValue::new(&mut fov).speed(0.5).clamp_range(0..=360)).changed() {
                                     let mut scene_ref_mut = self.scene.borrow_mut();
                                     scene_ref_mut.cameras[c].settings.fov = fov;
                                     scene_ref_mut.cameras[c].update();
@@ -174,7 +167,7 @@ impl GuiElement for SceneEditor {
                             ui.horizontal(|ui| {
                                 let mut aperture: f64 = self.scene.borrow().cameras[c].settings.aperture;
                                 ui.label("Aperture:");
-                                if ui.add(egui::DragValue::new(&mut aperture)).changed() {
+                                if ui.add(egui::DragValue::new(&mut aperture).speed(0.05)).changed() {
                                     let mut scene_ref_mut = self.scene.borrow_mut();
                                     scene_ref_mut.cameras[c].settings.aperture = aperture;
                                     scene_ref_mut.cameras[c].update();
@@ -184,56 +177,22 @@ impl GuiElement for SceneEditor {
                         // look_at dragvalues
                         {
                             ui.collapsing("Look at", |ui| {
-                                ui.horizontal(|ui| {
-                                    let mut x: f64 = self.scene.borrow().cameras[c].settings.look_at.x;
-                                    ui.label("x:");
-                                    if ui.add(egui::DragValue::new(&mut x)).changed() {
-                                        let mut scene_ref_mut = self.scene.borrow_mut();
-                                        scene_ref_mut.cameras[c].settings.look_at.x = x;
-                                        scene_ref_mut.cameras[c].update();
-                                    }
-                                    let mut y: f64 = self.scene.borrow().cameras[c].settings.look_at.y;
-                                    ui.label("y:");
-                                    if ui.add(egui::DragValue::new(&mut y)).changed() {
-                                        let mut scene_ref_mut = self.scene.borrow_mut();
-                                        scene_ref_mut.cameras[c].settings.look_at.y = y;
-                                        scene_ref_mut.cameras[c].update();
-                                    }
-                                    let mut z: f64 = self.scene.borrow().cameras[c].settings.look_at.z;
-                                    ui.label("z:");
-                                    if ui.add(egui::DragValue::new(&mut z)).changed() {
-                                        let mut scene_ref_mut = self.scene.borrow_mut();
-                                        scene_ref_mut.cameras[c].settings.look_at.z = z;
-                                        scene_ref_mut.cameras[c].update();
-                                    }
-                                })
+                                let mut look_at = self.scene.borrow().cameras[c].settings.look_at;
+                                if point3_editor(ui, &mut look_at).changed() {
+                                    let mut scene_ref_mut = self.scene.borrow_mut();
+                                    scene_ref_mut.cameras[c].settings.look_at = look_at;
+                                    scene_ref_mut.cameras[c].update();
+                                }
                             });
                         }
                         {
                             ui.collapsing("Look from", |ui| {
-                                ui.horizontal(|ui| {
-                                    let mut x: f64 = self.scene.borrow().cameras[c].settings.look_from.x;
-                                    ui.label("x:");
-                                    if ui.add(egui::DragValue::new(&mut x)).changed() {
-                                        let mut scene_ref_mut = self.scene.borrow_mut();
-                                        scene_ref_mut.cameras[c].settings.look_from.x = x;
-                                        scene_ref_mut.cameras[c].update();
-                                    }
-                                    let mut y: f64 = self.scene.borrow().cameras[c].settings.look_from.y;
-                                    ui.label("y:");
-                                    if ui.add(egui::DragValue::new(&mut y)).changed() {
-                                        let mut scene_ref_mut = self.scene.borrow_mut();
-                                        scene_ref_mut.cameras[c].settings.look_from.y = y;
-                                        scene_ref_mut.cameras[c].update();
-                                    }
-                                    let mut z: f64 = self.scene.borrow().cameras[c].settings.look_from.z;
-                                    ui.label("z:");
-                                    if ui.add(egui::DragValue::new(&mut z)).changed() {
-                                        let mut scene_ref_mut = self.scene.borrow_mut();
-                                        scene_ref_mut.cameras[c].settings.look_from.z = z;
-                                        scene_ref_mut.cameras[c].update();
-                                    }
-                                })
+                                let mut look_from = self.scene.borrow().cameras[c].settings.look_from;
+                                if point3_editor(ui, &mut look_from).changed() {
+                                    let mut scene_ref_mut = self.scene.borrow_mut();
+                                    scene_ref_mut.cameras[c].settings.look_from = look_from;
+                                    scene_ref_mut.cameras[c].update();
+                                }
                             });
                         }
                         ui.separator();
@@ -246,6 +205,18 @@ impl GuiElement for SceneEditor {
             e.show(ctx);
         }
     }
+}
+
+fn point3_editor(ui: &mut Ui, p: &mut Point3) -> Response {
+    ui.horizontal(|ui| {
+        ui.label("x:");
+        let x_field = ui.add(egui::DragValue::new(&mut p.x).speed(0.05));
+        ui.label("y:");
+        let y_field = ui.add(egui::DragValue::new(&mut p.y).speed(0.05));
+        ui.label("z:");
+        let z_field = ui.add(egui::DragValue::new(&mut p.z).speed(0.05));
+        x_field.union(y_field).union(z_field)
+    }).inner
 }
 
 fn texture_picker(ui: &mut Ui, tex_id: &mut Id<Texture>, repo: &Repo<Texture>) {
