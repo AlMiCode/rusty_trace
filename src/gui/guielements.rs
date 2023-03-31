@@ -3,6 +3,7 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use crate::Point3;
+
 use crate::repo::{Id, Repo};
 use crate::texture::Texture;
 use crate::{render, scene::Scene};
@@ -21,6 +22,7 @@ pub trait GuiElement {
 pub struct ImageGuiElement {
     title: String,
     image: Promise<RetainedImage>,
+    dimensions: (u32, u32),
     is_open: bool,
 }
 
@@ -55,6 +57,7 @@ impl ImageGuiElement {
                     ),
                 )
             }),
+            dimensions: img_dimensions,
             is_open: true,
         }
     }
@@ -64,9 +67,13 @@ impl GuiElement for ImageGuiElement {
     fn show(&mut self, ctx: &egui::Context) {
         egui::Window::new(&self.title)
             .open(&mut self.is_open)
-            .show(ctx, |ui| match self.image.ready() {
-                None => ui.spinner(),
-                Some(image) => image.show(ui),
+            .min_width(self.dimensions.0 as f32)
+            .min_height(self.dimensions.1 as f32)
+            .show(ctx, |ui| {
+                ui.vertical_centered(|ui| match self.image.ready() {
+                    None => { ui.spinner(); ui.label("Rendering in progress...") },
+                    Some(image) => image.show(ui),
+                });
             });
     }
 }
@@ -275,6 +282,7 @@ impl GuiElement for TextureEditor {
     fn show(&mut self, ctx: &egui::Context) {
         egui::Window::new("Textures")
             .open(&mut self.is_open)
+            .vscroll(true)
             .show(ctx, |ui| {
                 ui.group(|ui| {
                     ui.label("Default");
@@ -317,6 +325,7 @@ impl GuiElement for TextureEditor {
                         });
                         if let Some(edited_id) = self.edited_id {
                             if edited_id == *id {
+                                ui.separator();
                                 ui.horizontal(|ui| {
                                     ui.selectable_value(&mut self.choosing_colour, true, "Colour");
                                     ui.selectable_value(&mut self.choosing_colour, false, "Image");
