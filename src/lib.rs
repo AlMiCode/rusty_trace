@@ -107,7 +107,7 @@ pub fn rgb_to_vec(rgb: &Rgb<u8>) -> Colour {
 }
 
 fn random_f64() -> f64 {
-    rand::thread_rng().gen()
+    rand::thread_rng().gen::<f64>() * 2.0 - 1.0
 }
 
 fn random_vec() -> Vector3 {
@@ -117,7 +117,7 @@ fn random_vec() -> Vector3 {
 fn random_vec_in_sphere() -> Vector3 {
     loop {
         let vec = random_vec();
-        if vec.dot(vec) < 1.0 {
+        if vec.magnitude2() < 1.0 {
             return vec.normalize();
         }
     }
