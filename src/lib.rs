@@ -3,7 +3,6 @@ use cgmath::{ElementWise, InnerSpace, Zero};
 use hittable::{Hittable, HittableVec, Sphere};
 use image::{Rgb, RgbImage};
 use material::Material;
-use rand::Rng;
 use repo::{Repo, ARepo};
 use texture::Texture;
 
@@ -33,6 +32,8 @@ pub fn render(
     sample_count: u32,
     depth: u32
 ) {
+    use std::time::Instant;
+    let now = Instant::now();
     let (width, height) = image.dimensions();
     for y in 0..height {
         for x in 0..width {
@@ -52,6 +53,8 @@ pub fn render(
             panic!("could not flush stdout");
         }
     }
+    let elapsed = now.elapsed();
+    println!("Elapsed: {:.2?}", elapsed);
 }
 
 pub struct Ray {
@@ -107,7 +110,7 @@ pub fn rgb_to_vec(rgb: &Rgb<u8>) -> Colour {
 }
 
 fn random_f64() -> f64 {
-    rand::thread_rng().gen::<f64>() * 2.0 - 1.0
+    fastrand::f64() * 2.0 - 1.0
 }
 
 fn random_vec() -> Vector3 {
