@@ -47,7 +47,7 @@ impl ImageGuiElement {
                     &scene.textures.borrow(),
                     &scene.images.borrow(),
                     5,
-                    30,
+                    10,
                 );
                 RetainedImage::from_color_image(
                     "render",

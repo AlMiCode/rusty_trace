@@ -167,7 +167,7 @@ impl Hittable for Sphere {
 pub enum Plane { XY, XZ, YZ}
 
 #[derive(Clone)]
-struct Rect {
+pub struct Rect {
     n0: f64,
     n1: f64,
     m0: f64,

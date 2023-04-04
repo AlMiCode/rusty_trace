@@ -66,6 +66,7 @@ pub struct Dielectric {
 #[derive(Clone)]
 pub struct DiffuseLight {
     pub emit: Id<Texture>,
+    pub amplify: f32,
 }
 #[derive(Clone)]
 pub struct Isotropic {
@@ -139,7 +140,7 @@ impl Material for DiffuseLight {
         None
     }
     fn emit(&self, u: f64, v: f64, textures: &Repo<Texture>, images: &ARepo<RgbImage>) -> Colour {
-        textures.get(self.emit).colour_at(u, v, images)
+        textures.get(self.emit).colour_at(u, v, images) * self.amplify
     }
 }
 
