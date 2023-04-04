@@ -28,8 +28,8 @@ pub struct Gui {
 
 impl Default for Gui {
     fn default() -> Self {
-        let mut scene = Scene::default();
-        scene.add_camera(CameraSettings::default());
+        let mut scene = Scene::cornell_box();
+        /*scene.add_camera(CameraSettings::default());
         scene.add_camera(CameraSettings::default());
         scene.add_camera(CameraSettings::default());
 
@@ -49,7 +49,7 @@ impl Default for Gui {
             point3(0.0, -20.5, -1.0),
             20.0,
             lambert,
-        )));
+        )));*/
         let scene_rc = Rc::new(RefCell::new(scene));
         let scene_editor = SceneEditor::new(String::from("Scene editor"), scene_rc);
         Self {

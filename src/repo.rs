@@ -112,8 +112,10 @@ where
         self.resources.get(&id).unwrap_or(&self.default_value)
     }
 
-    pub fn insert(&mut self, id: Id<T>, value: C) {
+    pub fn insert(&mut self, value: C) -> Id<T> {
+        let id = Id::new();
         self.resources.insert(id, value);
+        id
     }
 
     pub fn iter(&self) -> Iter<'_, Id<T>, C> {
