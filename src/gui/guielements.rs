@@ -162,7 +162,7 @@ impl GuiElement for SceneEditor {
                             ui.horizontal(|ui| {
                                 let mut fov: f64 = self.scene.borrow().cameras[c].settings.fov;
                                 ui.label("FOV:");
-                                if ui.add(egui::DragValue::new(&mut fov).speed(0.5).clamp_range(0..=360)).changed() {
+                                if ui.add(egui::DragValue::new(&mut fov).speed(0.5).clamp_range(0..=360).suffix("°")).changed() {
                                     let mut scene_ref_mut = self.scene.borrow_mut();
                                     scene_ref_mut.cameras[c].settings.fov = fov;
                                     scene_ref_mut.cameras[c].update();
@@ -183,8 +183,9 @@ impl GuiElement for SceneEditor {
                         }
                         // look_at dragvalues
                         {
-                            ui.collapsing("Look at", |ui| {
+                            ui.horizontal(|ui| {
                                 let mut look_at = self.scene.borrow().cameras[c].settings.look_at;
+                                ui.label("Look At:");
                                 if point3_editor(ui, &mut look_at).changed() {
                                     let mut scene_ref_mut = self.scene.borrow_mut();
                                     scene_ref_mut.cameras[c].settings.look_at = look_at;
@@ -193,8 +194,9 @@ impl GuiElement for SceneEditor {
                             });
                         }
                         {
-                            ui.collapsing("Look from", |ui| {
+                            ui.horizontal(|ui| {
                                 let mut look_from = self.scene.borrow().cameras[c].settings.look_from;
+                                ui.label("Look From:");
                                 if point3_editor(ui, &mut look_from).changed() {
                                     let mut scene_ref_mut = self.scene.borrow_mut();
                                     scene_ref_mut.cameras[c].settings.look_from = look_from;
@@ -216,12 +218,9 @@ impl GuiElement for SceneEditor {
 
 fn point3_editor(ui: &mut Ui, p: &mut Point3) -> Response {
     ui.horizontal(|ui| {
-        ui.label("x:");
-        let x_field = ui.add(egui::DragValue::new(&mut p.x).speed(0.05));
-        ui.label("y:");
-        let y_field = ui.add(egui::DragValue::new(&mut p.y).speed(0.05));
-        ui.label("z:");
-        let z_field = ui.add(egui::DragValue::new(&mut p.z).speed(0.05));
+        let x_field = ui.add(egui::DragValue::new(&mut p.x).speed(0.05).prefix("X: "));
+        let y_field = ui.add(egui::DragValue::new(&mut p.y).speed(0.05).prefix("Y: "));
+        let z_field = ui.add(egui::DragValue::new(&mut p.z).speed(0.05).prefix("Z: "));
         x_field.union(y_field).union(z_field)
     }).inner
 }
