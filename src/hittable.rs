@@ -1,7 +1,7 @@
 use crate::material::Material;
 use crate::repo::Id;
 use crate::{Point3, Ray, Vector3};
-use cgmath::{InnerSpace, EuclideanSpace, vec3};
+use cgmath::{vec3, EuclideanSpace, InnerSpace};
 
 pub struct HitRecord {
     pub point: Point3,
@@ -13,14 +13,35 @@ pub struct HitRecord {
 }
 
 impl HitRecord {
-    fn new(ray: &Ray, distance: f64, outward_normal: Vector3, uv: (f64, f64), material_id: Id<dyn Material>) -> Self {
+    fn new(
+        ray: &Ray,
+        distance: f64,
+        outward_normal: Vector3,
+        uv: (f64, f64),
+        material_id: Id<dyn Material>,
+    ) -> Self {
         let front_face = ray.direction.dot(outward_normal) < 0.0;
-        let normal = if front_face { outward_normal } else { -outward_normal };
-        Self { point: ray.at(distance), normal, distance, uv, front_face, material_id }
+        let normal = if front_face {
+            outward_normal
+        } else {
+            -outward_normal
+        };
+        Self {
+            point: ray.at(distance),
+            normal,
+            distance,
+            uv,
+            front_face,
+            material_id,
+        }
     }
     fn set_face_normal(&mut self, ray: &Ray, outward_normal: Vector3) {
         self.front_face = ray.direction.dot(outward_normal) < 0.0;
-        self.normal = if self.front_face { outward_normal } else { -outward_normal };
+        self.normal = if self.front_face {
+            outward_normal
+        } else {
+            -outward_normal
+        };
     }
 }
 
@@ -69,33 +90,36 @@ impl Hittable for HittableVec {
         result
     }
 
-    fn get_position(&self) -> Point3 { unimplemented!() }
-    fn set_position(&mut self, _c: Point3) { unimplemented!() }
+    fn get_position(&self) -> Point3 {
+        unimplemented!()
+    }
+    fn set_position(&mut self, _c: Point3) {
+        unimplemented!()
+    }
 }
 
 #[derive(Clone)]
 struct Translate {
     offset: Vector3,
-    object: Box<dyn Hittable>
+    object: Box<dyn Hittable>,
 }
 
 impl Translate {
     fn new(object: Box<dyn Hittable>, offset: Vector3) -> Self {
-        Self {
-            object,
-            offset
-        }
+        Self { object, offset }
     }
 }
 
 impl Hittable for Translate {
     fn hit_bounded(&self, ray: &Ray, min_dist: f64, max_dist: f64) -> Option<HitRecord> {
         let moved_ray = Ray::new(ray.origin - self.offset, ray.direction);
-        self.object.hit_bounded(&moved_ray, min_dist, max_dist).and_then(|mut hit| {
-            hit.point += self.offset;
-            hit.set_face_normal(ray, hit.normal);
-            Some(hit)
-        })
+        self.object
+            .hit_bounded(&moved_ray, min_dist, max_dist)
+            .and_then(|mut hit| {
+                hit.point += self.offset;
+                hit.set_face_normal(ray, hit.normal);
+                Some(hit)
+            })
     }
 
     fn set_position(&mut self, c: Point3) {
@@ -152,17 +176,29 @@ impl Hittable for Sphere {
         }
         let point = ray.at(root);
         let outward_normal = (point - self.center) / self.radius;
-        Some(HitRecord::new(ray, root, outward_normal, Sphere::get_uv(&outward_normal), self.material_id))
+        Some(HitRecord::new(
+            ray,
+            root,
+            outward_normal,
+            Sphere::get_uv(&outward_normal),
+            self.material_id,
+        ))
     }
 
-    fn get_position(&self) -> Point3 { self.center }
+    fn get_position(&self) -> Point3 {
+        self.center
+    }
     fn set_position(&mut self, c: Point3) {
         self.center = c;
     }
 }
 
 #[derive(Clone)]
-pub enum Plane { XY, XZ, YZ}
+pub enum Plane {
+    XY,
+    XZ,
+    YZ,
+}
 
 #[derive(Clone)]
 pub struct Rect {
@@ -173,19 +209,43 @@ pub struct Rect {
     k: f64,
     plane: Plane,
 
-    material_id: Id<dyn Material>
+    material_id: Id<dyn Material>,
 }
 
 impl Rect {
     pub fn new(p0: &Point3, p1: &Point3, plane: Plane, material_id: Id<dyn Material>) -> Self {
         let (min_p, max_p) = (
-            Point3::new(p0.x.min(p1.x), p0.y.min(p1.y), p0.z.min(p1.z)), 
-            Point3::new(p0.x.max(p1.x), p0.y.max(p1.y), p0.z.max(p1.z))
+            Point3::new(p0.x.min(p1.x), p0.y.min(p1.y), p0.z.min(p1.z)),
+            Point3::new(p0.x.max(p1.x), p0.y.max(p1.y), p0.z.max(p1.z)),
         );
         match plane {
-            Plane::XY => Self { n0: min_p.x, n1: max_p.x, m0: min_p.y, m1: max_p.y, k: (min_p.z + max_p.z) / 2.0, plane, material_id },
-            Plane::XZ => Self { n0: min_p.x, n1: max_p.x, m0: min_p.z, m1: max_p.z, k: (min_p.y + max_p.y) / 2.0, plane, material_id },
-            Plane::YZ => Self { n0: min_p.y, n1: max_p.y, m0: min_p.z, m1: max_p.z, k: (min_p.x + max_p.x) / 2.0, plane, material_id },
+            Plane::XY => Self {
+                n0: min_p.x,
+                n1: max_p.x,
+                m0: min_p.y,
+                m1: max_p.y,
+                k: (min_p.z + max_p.z) / 2.0,
+                plane,
+                material_id,
+            },
+            Plane::XZ => Self {
+                n0: min_p.x,
+                n1: max_p.x,
+                m0: min_p.z,
+                m1: max_p.z,
+                k: (min_p.y + max_p.y) / 2.0,
+                plane,
+                material_id,
+            },
+            Plane::YZ => Self {
+                n0: min_p.y,
+                n1: max_p.y,
+                m0: min_p.z,
+                m1: max_p.z,
+                k: (min_p.x + max_p.x) / 2.0,
+                plane,
+                material_id,
+            },
         }
     }
 }
@@ -211,9 +271,15 @@ impl Hittable for Rect {
         if point_n < self.n0 || point_n > self.n1 || point_m < self.m0 || point_m > self.m1 {
             return None;
         }
-        let u = (point_n - self.n0)/(self.n1 - self.n0);
-        let v = (point_m - self.m0)/(self.m1 - self.m0);
-        Some(HitRecord::new(ray, dist, outward_normal, (u, v), self.material_id))
+        let u = (point_n - self.n0) / (self.n1 - self.n0);
+        let v = (point_m - self.m0) / (self.m1 - self.m0);
+        Some(HitRecord::new(
+            ray,
+            dist,
+            outward_normal,
+            (u, v),
+            self.material_id,
+        ))
     }
 
     fn get_position(&self) -> Point3 {

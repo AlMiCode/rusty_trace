@@ -79,7 +79,10 @@ impl Scene {
         let red_mat = materials.insert(Box::new(Lambertian { albedo: red_tex }));
         let white_mat = materials.insert(Box::new(Lambertian { albedo: white_tex }));
         let green_mat = materials.insert(Box::new(Lambertian { albedo: green_tex }));
-        let light_mat = materials.insert(Box::new(DiffuseLight { emit: light_tex, amplify: 15f32 }));
+        let light_mat = materials.insert(Box::new(DiffuseLight {
+            emit: light_tex,
+            amplify: 15f32,
+        }));
 
         let green_wall = Rect::new(
             &point3(555.0, 0.0, 0.0),

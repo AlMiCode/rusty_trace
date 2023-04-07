@@ -3,7 +3,7 @@ use cgmath::{ElementWise, InnerSpace, Zero};
 use hittable::{Hittable, HittableVec, Sphere};
 use image::{Rgb, RgbImage};
 use material::Material;
-use repo::{Repo, ARepo};
+use repo::{ARepo, Repo};
 use texture::Texture;
 
 use std::io::Write;
@@ -14,8 +14,8 @@ pub mod hittable;
 pub mod material;
 pub mod texture;
 // pub mod renderer;
-pub mod scene;
 mod repo;
+pub mod scene;
 
 pub type Point3 = cgmath::Point3<f64>;
 pub type Vector3 = cgmath::Vector3<f64>;
@@ -30,7 +30,7 @@ pub fn render(
     textures: &Repo<Texture>,
     images: &ARepo<RgbImage>,
     sample_count: u32,
-    depth: u32
+    depth: u32,
 ) {
     use std::time::Instant;
     let now = Instant::now();
@@ -71,13 +71,26 @@ impl Ray {
     }
 }
 
-pub fn cast_ray(ray: Ray, hittable: &dyn Hittable, background: &Texture, materials: &Repo<dyn Material>, textures: &Repo<Texture>, images: &ARepo<RgbImage>, depth: u32) -> Colour {
+pub fn cast_ray(
+    ray: Ray,
+    hittable: &dyn Hittable,
+    background: &Texture,
+    materials: &Repo<dyn Material>,
+    textures: &Repo<Texture>,
+    images: &ARepo<RgbImage>,
+    depth: u32,
+) -> Colour {
     if depth == 0 {
         return Colour::new(0.0, 0.0, 0.0);
     }
     if let Some(hit) = hittable.hit_bounded(&ray, 0.0001, f64::INFINITY) {
-        let emitted = materials.get(hit.material_id).emit(hit.uv.0, hit.uv.1, textures, images);
-        match materials.get(hit.material_id).scatter(&ray, &hit, textures, images) {
+        let emitted = materials
+            .get(hit.material_id)
+            .emit(hit.uv.0, hit.uv.1, textures, images);
+        match materials
+            .get(hit.material_id)
+            .scatter(&ray, &hit, textures, images)
+        {
             None => emitted,
             Some(scattered) => {
                 scattered.attenuation.mul_element_wise(cast_ray(

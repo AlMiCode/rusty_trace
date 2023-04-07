@@ -36,7 +36,7 @@ impl Default for Gui {
         let blue = scene.add_texture(Box::new(Colour::new(0.8, 0.8, 0.5).into()));
         let gold = scene.add_texture(Box::new(Colour::new(0.8, 0.8, 0.5).into()));
         let white_light = scene.add_texture(Box::new(Colour::new(5.0, 5.0, 5.0).into()));
-        
+
         let lambert = scene.add_material(Box::new(Lambertian { albedo: blue }));
         let metal = scene.add_material(Box::new(Metal { albedo: gold, fuzz: 0.4 }));
         let glass = scene.add_material(Box::new(Dielectric { refractive_index: 1.5 }));
