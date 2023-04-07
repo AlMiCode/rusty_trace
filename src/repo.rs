@@ -3,7 +3,11 @@ use std::{
     fmt::Display,
     hash::Hash,
     marker::PhantomData,
-    sync::{atomic::{AtomicU32, Ordering}, Arc}, ops::{Deref, DerefMut},
+    ops::{Deref, DerefMut},
+    sync::{
+        atomic::{AtomicU32, Ordering},
+        Arc,
+    },
 };
 
 use indexmap::IndexMap;
@@ -64,7 +68,6 @@ where
     }
 }
 
-
 impl<T> Id<T>
 where
     T: ?Sized,
@@ -83,7 +86,6 @@ where
     }
 }
 
-
 pub type Repo<T> = Repository<T, Box<T>>;
 pub type ARepo<T> = Repository<T, Arc<T>>;
 
@@ -95,7 +97,7 @@ pub struct Repository<Type: ?Sized, ContainedType: Deref<Target = Type>> {
 impl<T, C> Repository<T, C>
 where
     T: ?Sized,
-    C: Deref<Target = T>
+    C: Deref<Target = T>,
 {
     pub fn new(default_value: C) -> Self {
         Self {
@@ -126,7 +128,7 @@ where
 impl<T, C> Repository<T, C>
 where
     T: ?Sized,
-    C: Deref<Target = T> + DerefMut<Target = T>
+    C: Deref<Target = T> + DerefMut<Target = T>,
 {
     pub fn get_defaul_mut(&mut self) -> &mut T {
         &mut self.default_value
@@ -146,9 +148,12 @@ where
 impl<T, C> Clone for Repository<T, C>
 where
     T: ?Sized,
-    C: Deref<Target = T> + Clone
+    C: Deref<Target = T> + Clone,
 {
     fn clone(&self) -> Self {
-        Repository { resources: self.resources.clone(), default_value: self.default_value.clone() }
+        Repository {
+            resources: self.resources.clone(),
+            default_value: self.default_value.clone(),
+        }
     }
 }

@@ -1,6 +1,9 @@
 use image::RgbImage;
 
-use crate::{rgb_to_vec, Colour, repo::{Id, ARepo}};
+use crate::{
+    repo::{ARepo, Id},
+    rgb_to_vec, Colour,
+};
 
 #[derive(Clone)]
 pub enum Texture {
