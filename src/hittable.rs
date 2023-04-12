@@ -46,6 +46,7 @@ impl HitRecord {
 }
 
 pub trait Hittable: Send + HittableClone {
+    fn name(&self) -> &'static str;
     fn hit_bounded(&self, ray: &Ray, min_dist: f64, max_dist: f64) -> Option<HitRecord>;
     fn hit(&self, ray: &Ray) -> Option<HitRecord> {
         self.hit_bounded(ray, f64::EPSILON, f64::INFINITY)
@@ -96,6 +97,10 @@ impl Hittable for HittableVec {
     fn set_position(&mut self, _c: Point3) {
         unimplemented!()
     }
+
+    fn name(&self) -> &'static str {
+        "Group"
+    }
 }
 
 #[derive(Clone)]
@@ -128,6 +133,10 @@ impl Hittable for Translate {
 
     fn get_position(&self) -> Point3 {
         Point3::from_vec(self.offset)
+    }
+
+    fn name(&self) -> &'static str {
+        "Translate"
     }
 }
 
@@ -191,6 +200,10 @@ impl Hittable for Sphere {
     fn set_position(&mut self, c: Point3) {
         self.center = c;
     }
+
+    fn name(&self) -> &'static str {
+        "Sphere"
+    }
 }
 
 #[derive(Clone)]
@@ -213,39 +226,11 @@ pub struct Rect {
 }
 
 impl Rect {
-    pub fn new(p0: &Point3, p1: &Point3, plane: Plane, material_id: Id<dyn Material>) -> Self {
-        let (min_p, max_p) = (
-            Point3::new(p0.x.min(p1.x), p0.y.min(p1.y), p0.z.min(p1.z)),
-            Point3::new(p0.x.max(p1.x), p0.y.max(p1.y), p0.z.max(p1.z)),
-        );
+    pub fn new(p0: &Point3, n: f64, m: f64, plane: Plane, material_id: Id<dyn Material>) -> Self {
         match plane {
-            Plane::XY => Self {
-                n0: min_p.x,
-                n1: max_p.x,
-                m0: min_p.y,
-                m1: max_p.y,
-                k: (min_p.z + max_p.z) / 2.0,
-                plane,
-                material_id,
-            },
-            Plane::XZ => Self {
-                n0: min_p.x,
-                n1: max_p.x,
-                m0: min_p.z,
-                m1: max_p.z,
-                k: (min_p.y + max_p.y) / 2.0,
-                plane,
-                material_id,
-            },
-            Plane::YZ => Self {
-                n0: min_p.y,
-                n1: max_p.y,
-                m0: min_p.z,
-                m1: max_p.z,
-                k: (min_p.x + max_p.x) / 2.0,
-                plane,
-                material_id,
-            },
+            Plane::XY => Self { n0: p0.x, m0: p0.y, n1: p0.x + n, m1: p0.y + m, k: p0.z, plane, material_id },
+            Plane::XZ => Self { n0: p0.x, m0: p0.z, n1: p0.x + n, m1: p0.z + m, k: p0.y, plane, material_id },
+            Plane::YZ => Self { n0: p0.y, m0: p0.z, n1: p0.y + n, m1: p0.z + m, k: p0.x, plane, material_id }
         }
     }
 }
@@ -292,5 +277,9 @@ impl Hittable for Rect {
 
     fn set_position(&mut self, _c: Point3) {
         unimplemented!("set_position and get_position is wrong way, as every object has its own properties. Will be replaced with add_modifier soon")
+    }
+
+    fn name(&self) -> &'static str {
+        "Rectangle"
     }
 }

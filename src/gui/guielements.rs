@@ -136,7 +136,7 @@ impl GuiElement for SceneEditor {
                     ui.collapsing("Objects", |ui| {
                         let hittable_len = self.scene.borrow().hittable.len();
                         for i in 0..hittable_len {
-                            ui.collapsing(format!("Sphere {i}"), |ui| {
+                            ui.collapsing(format!("{} {i}", self.scene.borrow().hittable[i].name()), |ui| {
                                 ui.label("Position");
                                 let mut c = self.scene.borrow().hittable[i].as_ref().get_position();
                                 if point3_editor(ui, &mut c).changed() {

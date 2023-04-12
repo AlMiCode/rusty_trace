@@ -86,37 +86,38 @@ impl Scene {
 
         let green_wall = Rect::new(
             &point3(555.0, 0.0, 0.0),
-            &point3(555.0, 555.0, 555.0),
+            555.0,
+            555.0,
             Plane::YZ,
             green_mat,
         );
         let red_wall = Rect::new(
             &point3(0.0, 0.0, 0.0),
-            &point3(0.0, 555.0, 555.0),
+            555.0, 555.0,
             Plane::YZ,
             red_mat,
         );
         let floor = Rect::new(
             &point3(0.0, 0.0, 0.0),
-            &point3(555.0, 0.0, 555.0),
+            555.0, 555.0,
             Plane::XZ,
             white_mat,
         );
         let ceiling = Rect::new(
             &point3(0.0, 555.0, 0.0),
-            &point3(555.0, 555.0, 555.0),
+            555.0, 555.0,
             Plane::XZ,
             white_mat,
         );
         let back_wall = Rect::new(
             &point3(0.0, 0.0, 555.0),
-            &point3(555.0, 555.0, 555.0),
+            555.0, 555.0,
             Plane::XY,
             white_mat,
         );
         let light_source = Rect::new(
             &point3(213.0, 554.0, 227.0),
-            &point3(343.0, 554.0, 332.0),
+            130.0, 105.0,
             Plane::XZ,
             light_mat,
         );
