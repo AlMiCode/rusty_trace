@@ -1,10 +1,10 @@
-use std::{cell::RefCell, default, sync::Arc};
+use std::{cell::RefCell, sync::Arc};
 
-use cgmath::{point3, vec3, Point3};
+use cgmath::point3;
 use image::RgbImage;
 
 use crate::{
-    camera::{Camera, CameraSettings},
+    camera::CameraSettings,
     hittable::{Hittable, HittableVec, Plane, Rect},
     material::{DiffuseLight, Lambertian, Material},
     repo::{ARepo, Id, Repo},
@@ -15,7 +15,7 @@ use crate::{
 #[derive(Clone)]
 pub struct Scene {
     pub hittable: HittableVec,
-    pub cameras: Vec<Camera>,
+    pub cameras: Vec<CameraSettings>,
     pub background: Id<Texture>,
     pub materials: Repo<dyn Material>,
     pub textures: RefCell<Repo<Texture>>,
@@ -48,7 +48,7 @@ impl Scene {
     }
 
     pub fn add_camera(&mut self, settings: CameraSettings) {
-        self.cameras.push(Camera::new(settings))
+        self.cameras.push(settings)
     }
 
     pub fn add_material(&mut self, material: Box<dyn Material>) -> Id<dyn Material> {
@@ -123,6 +123,13 @@ impl Scene {
         );
 
         let default_img = Arc::new(RgbImage::new(4, 4));
+        let camera_set = CameraSettings {
+            look_from: point3(278.0, 278.0, -800.0),
+            look_at: point3(278.0, 278.0, 0.0),
+            fov: 40.0,
+            aperture: 1.0 / 16.0,
+            ..Default::default()
+        };
         Self {
             hittable: vec![
                 Box::new(green_wall),
@@ -132,13 +139,7 @@ impl Scene {
                 Box::new(back_wall),
                 Box::new(light_source),
             ],
-            cameras: vec![Camera::new(CameraSettings {
-                look_from: point3(278.0, 278.0, -800.0),
-                look_at: point3(278.0, 278.0, 0.0),
-                fov: 40.0,
-                aperture: 1.0 / 16.0,
-                ..Default::default()
-            })],
+            cameras: vec![camera_set.clone(), camera_set],
             background: white_tex,
             materials,
             textures: textures.into(),

@@ -1,20 +1,13 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release //
 
-use crate::{
-    camera::CameraSettings,
-    hittable::Sphere,
-    material::{Dielectric, DiffuseLight, Lambertian, Metal},
-    scene::Scene,
-    Colour,
-};
-
 use std::{cell::RefCell, rc::Rc};
 
-use cgmath::point3;
 use eframe::egui;
 
 mod guielements;
 use guielements::*;
+
+use crate::scene::Scene;
 
 #[derive(Clone, Copy)]
 pub struct WindowDimensions {
@@ -28,7 +21,7 @@ pub struct Gui {
 
 impl Default for Gui {
     fn default() -> Self {
-        let mut scene = Scene::cornell_box();
+        let scene = Scene::cornell_box();
         /*scene.add_camera(CameraSettings::default());
         scene.add_camera(CameraSettings::default());
         scene.add_camera(CameraSettings::default());

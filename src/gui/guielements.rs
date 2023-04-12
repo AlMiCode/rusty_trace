@@ -4,13 +4,15 @@ use std::sync::Arc;
 
 use crate::Point3;
 
+use crate::camera::CameraSettings;
 use crate::repo::{Id, Repo};
 use crate::texture::Texture;
 use crate::{render, scene::Scene};
 use egui::color_picker::{color_edit_button_rgb, show_color};
-use egui::ColorImage;
+use egui::{ColorImage, RichText};
+use egui::style::Interaction;
 use egui::{Color32, Response, Ui, Vec2};
-use egui_extras::RetainedImage;
+use egui_extras::{RetainedImage, TableBuilder};
 use image::RgbImage;
 use indexmap::IndexMap;
 use poll_promise::Promise;
@@ -40,7 +42,7 @@ impl ImageGuiElement {
                 let mut image = RgbImage::new(img_dimensions.0, img_dimensions.1);
                 render(
                     &mut image,
-                    &scene.cameras[camera_id],
+                    &scene.cameras[camera_id].build_with_dimensions(img_dimensions.0, img_dimensions.1),
                     &scene.hittable,
                     &scene.textures.borrow().get(scene.background),
                     &scene.materials,
@@ -86,7 +88,6 @@ pub struct SceneEditor {
     scene: Rc<RefCell<Scene>>,
     sub_elements: Vec<Box<dyn GuiElement>>,
     texture_editor: TextureEditor,
-    is_open: bool,
 }
 
 impl SceneEditor {
@@ -98,7 +99,6 @@ impl SceneEditor {
             scene,
             sub_elements: vec![],
             texture_editor,
-            is_open: true,
         }
     }
 }
@@ -111,9 +111,9 @@ impl GuiElement for SceneEditor {
 
         egui::Window::new(&self.title)
             .default_pos(pos)
-            .open(&mut self.is_open)
             .vscroll(true)
             .show(ctx, |ui| {
+                ui.heading("Scene");
                 ui.group(|ui| {
                     if ui.link("Objects").clicked() {};
                     if ui.link("Materials").clicked() {};
@@ -121,108 +121,43 @@ impl GuiElement for SceneEditor {
                         self.texture_editor.is_open = true;
                     }
                 });
-                ui.collapsing("Scene", |ui| {
-                    ui.collapsing("Background", |ui| {
-                        ui.horizontal(|ui| {
-                            let mut background = self.scene.borrow().background;
-                            texture_picker(
-                                ui,
-                                &mut background,
-                                &self.scene.borrow().textures.borrow(),
-                            );
-                            self.scene.borrow_mut().background = background;
-                        });
+                ui.collapsing("Background", |ui| {
+                    ui.horizontal(|ui| {
+                        let mut background = self.scene.borrow().background;
+                        texture_picker(
+                            ui,
+                            &mut background,
+                            &self.scene.borrow().textures.borrow(),
+                        );
+                        self.scene.borrow_mut().background = background;
                     });
-                    ui.collapsing("Objects", |ui| {
-                        let hittable_len = self.scene.borrow().hittable.len();
-                        for i in 0..hittable_len {
-                            ui.collapsing(format!("{} {i}", self.scene.borrow().hittable[i].name()), |ui| {
-                                ui.label("Position");
-                                let mut c = self.scene.borrow().hittable[i].as_ref().get_position();
-                                if point3_editor(ui, &mut c).changed() {
-                                    let mut scene_ref_mut = self.scene.borrow_mut();
-                                    scene_ref_mut.hittable[i].as_mut().set_position(c);
-                                }
-                            });
-                        }
-                    })
+                });
+                ui.collapsing("Objects", |ui| {
+                    let hittable_len = self.scene.borrow().hittable.len();
+                    for i in 0..hittable_len {
+                        ui.collapsing(format!("{} {i}", self.scene.borrow().hittable[i].name()), |ui| {
+                            ui.label("Position");
+                            let mut c = self.scene.borrow().hittable[i].as_ref().get_position();
+                            if point3_editor(ui, &mut c).changed() {
+                                let mut scene_ref_mut = self.scene.borrow_mut();
+                                scene_ref_mut.hittable[i].as_mut().set_position(c);
+                            }
+                        });
+                    }
                 });
                 let cam_len = self.scene.borrow().cameras.len();
                 for c in 0..cam_len {
                     ui.collapsing(format!("Camera {c}"), |ui| {
-                        // Render button
-                        {
-                            ui.horizontal(|ui| {
-                                if ui.button("Render").clicked() {
-                                    let guielement = Box::new(ImageGuiElement::new(
-                                        c,
-                                        self.sub_elements.len(),
-                                        (400, 400),
-                                        (*self.scene.borrow()).clone(),
-                                    ));
-                                    self.sub_elements.push(guielement);
-                                }
-                            });
-                        }
-                        // fov dragvalue
-                        {
-                            ui.horizontal(|ui| {
-                                let mut fov: f64 = self.scene.borrow().cameras[c].settings.fov;
-                                ui.label("FOV:");
-                                if ui
-                                    .add(
-                                        egui::DragValue::new(&mut fov)
-                                            .speed(0.5)
-                                            .clamp_range(0..=360)
-                                            .suffix("°"),
-                                    )
-                                    .changed()
-                                {
-                                    let mut scene_ref_mut = self.scene.borrow_mut();
-                                    scene_ref_mut.cameras[c].settings.fov = fov;
-                                    scene_ref_mut.cameras[c].update();
-                                }
-                            });
-                        }
-                        // aperture dragvalue
-                        {
-                            ui.horizontal(|ui| {
-                                let mut aperture: f64 =
-                                    self.scene.borrow().cameras[c].settings.aperture;
-                                ui.label("Aperture:");
-                                if ui
-                                    .add(egui::DragValue::new(&mut aperture).speed(0.05))
-                                    .changed()
-                                {
-                                    let mut scene_ref_mut = self.scene.borrow_mut();
-                                    scene_ref_mut.cameras[c].settings.aperture = aperture;
-                                    scene_ref_mut.cameras[c].update();
-                                }
-                            });
-                        }
-                        // look_at dragvalues
-                        {
-                            ui.horizontal(|ui| {
-                                let mut look_at = self.scene.borrow().cameras[c].settings.look_at;
-                                ui.label("Look At:");
-                                if point3_editor(ui, &mut look_at).changed() {
-                                    let mut scene_ref_mut = self.scene.borrow_mut();
-                                    scene_ref_mut.cameras[c].settings.look_at = look_at;
-                                    scene_ref_mut.cameras[c].update();
-                                }
-                            });
-                        }
-                        {
-                            ui.horizontal(|ui| {
-                                let mut look_from =
-                                    self.scene.borrow().cameras[c].settings.look_from;
-                                ui.label("Look From:");
-                                if point3_editor(ui, &mut look_from).changed() {
-                                    let mut scene_ref_mut = self.scene.borrow_mut();
-                                    scene_ref_mut.cameras[c].settings.look_from = look_from;
-                                    scene_ref_mut.cameras[c].update();
-                                }
-                            });
+                        camera_settings_editor(ui, &mut self.scene.borrow_mut().cameras[c]);
+                        ui.separator();
+                        if ui.button("Render").clicked() {
+                            let guielement = Box::new(ImageGuiElement::new(
+                                c,
+                                self.sub_elements.len(),
+                                (400, 400),
+                                (*self.scene.borrow()).clone(),
+                            ));
+                            self.sub_elements.push(guielement);
                         }
                         ui.separator();
                     });
@@ -247,26 +182,65 @@ fn point3_editor(ui: &mut Ui, p: &mut Point3) -> Response {
 }
 
 fn texture_picker(ui: &mut Ui, tex_id: &mut Id<Texture>, repo: &Repo<Texture>) {
-    let mut new_tex = *tex_id;
     egui::ComboBox::from_label("")
-        .selected_text(format!("Texture {}", new_tex))
+        .selected_text(format!("Texture {}", tex_id))
         .show_ui(ui, |ui| {
-            ui.selectable_value(&mut new_tex, Id::default(), "Default");
+            ui.selectable_value(tex_id, Id::default(), "Default");
             for (option, _tex) in repo.iter() {
                 ui.selectable_value::<Id<Texture>>(
-                    &mut new_tex,
+                    tex_id,
                     *option,
                     format!("Texture {}", option),
                 );
             }
         });
-    if let Texture::Colour(c) = repo.get(new_tex) {
+    if let Texture::Colour(c) = repo.get(*tex_id) {
         let colour: Color32 = egui::Rgba::from_rgb(c.x, c.y, c.z).into();
         show_color(ui, colour, egui::vec2(35.0, 15.0));
     } else {
         ui.label("Image");
     }
-    *tex_id = new_tex;
+}
+
+fn camera_settings_editor(ui: &mut Ui, c: &mut CameraSettings) {
+    egui::Grid::new(ui.auto_id_with("camera_settings")).show(ui, |ui|{
+        ui.label("FOV:");
+        ui.add(egui::DragValue::new(&mut c.fov).speed(0.5).clamp_range(0..=360).suffix("°"));
+        ui.end_row();
+
+        ui.label("Aperture:");
+        ui.add(egui::DragValue::new(&mut c.aperture).speed(0.05));
+        ui.end_row();
+
+        ui.label("Look At:");
+        point3_editor(ui, &mut c.look_at);
+        ui.end_row();
+
+        ui.label("Look From:");
+        point3_editor(ui, &mut c.look_from);
+        ui.end_row();
+    });
+}
+
+fn load_image(filename: String) -> Promise<Option<Arc<RgbImage>>> {
+    Promise::spawn_thread("open_file", move || {
+        let reader = match image::io::Reader::open(&filename) {
+            Err(_) => {
+                eprintln!("Could not read");
+                return None;
+            }
+            Ok(r) => r,
+        };
+        let dyn_img = match reader.decode() {
+            Err(_) => {
+                eprintln!("Could not decode");
+                return None;
+            }
+            Ok(img) => img,
+        };
+        let rgb_img = dyn_img.to_rgb8();
+        Some(Arc::new(rgb_img))
+    })
 }
 
 struct TextureEditor {
@@ -308,39 +282,44 @@ impl GuiElement for TextureEditor {
             .open(&mut self.is_open)
             .vscroll(true)
             .show(ctx, |ui| {
-                ui.group(|ui| {
-                    ui.label("Default");
-                    ui.horizontal(|ui| {
-                        if let Texture::Colour(c) =
-                            self.scene.borrow().textures.borrow().get_default()
-                        {
-                            ui.label("Colour: ");
-                            let colour: Color32 = egui::Rgba::from_rgb(c.x, c.y, c.z).into();
-                            show_color(ui, colour, egui::vec2(35.0, 15.0));
-                        } else if let Texture::Image(img) =
-                            self.scene.borrow().textures.borrow().get_default()
-                        {
+
+                egui::Grid::new(ui.auto_id_with("textures"))
+                    .striped(true)
+                    .show(ui, |ui| {
+                    /*ui.label("Default");
+                    if let Texture::Colour(c) =
+                        self.scene.borrow().textures.borrow().get_default()
+                    {
+                        ui.label("Colour");
+                        let colour: Color32 = egui::Rgba::from_rgb(c.x, c.y, c.z).into();
+                        show_color(ui, colour, egui::vec2(35.0, 15.0));
+                    } else if let Texture::Image(img) =
+                        self.scene.borrow().textures.borrow().get_default()
+                    {
+                        ui.label("Image");
+                        ui.label("HOVER").on_hover_ui(|ui| {
                             let images_ref = self.images.borrow();
                             let ret_img = images_ref.get(img).unwrap_or(&self.fallback);
                             ret_img.show_size(ui, Vec2::new(100f32, 100f32));
-                        }
-                    });
-                });
-
-                for (id, tex) in self.scene.borrow().textures.borrow_mut().iter_mut() {
-                    ui.group(|ui| {
+                        });
+                    }
+                    ui.end_row();*/
+                    for (id, tex) in self.scene.borrow().textures.borrow_mut().iter_mut() {
                         ui.label(format!("Texture {}", id));
-                        ui.horizontal(|ui| {
-                            if let Texture::Colour(c) = tex.as_ref() {
-                                ui.label("Colour: ");
-                                let colour: Color32 = egui::Rgba::from_rgb(c.x, c.y, c.z).into();
-                                show_color(ui, colour, egui::vec2(35.0, 15.0));
-                            } else if let Texture::Image(img) = tex.as_ref() {
+                        if let Texture::Colour(c) = tex.as_ref() {
+                            ui.label("Colour");
+                            let colour: Color32 = egui::Rgba::from_rgb(c.x, c.y, c.z).into();
+                            show_color(ui, colour, egui::vec2(35.0, 15.0));
+                        } else if let Texture::Image(img) = tex.as_ref() {
+                            ui.label("Image");
+                            ui.label(RichText::new("Preview").italics().underline()).on_hover_ui(|ui| {
                                 let images_ref = self.images.borrow();
                                 let ret_img = images_ref.get(img).unwrap_or(&self.fallback);
                                 ret_img.show_size(ui, Vec2::new(100f32, 100f32));
-                            }
-                            if ui.button("Change").clicked() {
+                            });
+                        }
+                        if self.edited_id == None {
+                            if ui.button("Edit").clicked() {
                                 self.edited_id = Some(*id);
                                 if let Texture::Colour(c) = tex.as_ref() {
                                     self.choosing_colour = true;
@@ -350,93 +329,60 @@ impl GuiElement for TextureEditor {
                                     self.edited_image_id = Some(*img);
                                 }
                             }
-                        });
-                        if let Some(edited_id) = self.edited_id {
+                        } else {
+                            let edited_id = self.edited_id.unwrap();
                             if edited_id == *id {
-                                ui.separator();
-                                ui.horizontal(|ui| {
-                                    ui.selectable_value(&mut self.choosing_colour, true, "Colour");
-                                    ui.selectable_value(&mut self.choosing_colour, false, "Image");
+                                ui.end_row();
+                                ui.label("");
+                                ui.vertical(|ui| {
+                                    ui.style_mut().wrap = Some(false);
+                                    ui.radio_value(&mut self.choosing_colour, true, "Colour");
+                                    ui.radio_value(&mut self.choosing_colour, false, "Image");
                                 });
-                                ui.horizontal(|ui| {
-                                    if self.choosing_colour {
-                                        color_edit_button_rgb(ui, &mut self.edited_rgb);
-                                        if ui.button("Set").clicked() {
-                                            *tex.as_mut() = Texture::Colour(self.edited_rgb.into());
+                                if self.choosing_colour {
+                                    ui.color_edit_button_rgb(&mut self.edited_rgb);
+                                } else {
+                                    if self.edited_image_id == None {
+                                        match self.loaded_image.poll() {
+                                            std::task::Poll::Ready(None) => if ui.button("Open file...").clicked() {
+                                                if let Some(path) = rfd::FileDialog::new().pick_file() {
+                                                    let picked_path = path.display().to_string();
+                                                    self.loaded_image = load_image(picked_path);
+                                                    self.edited_image_id = None;
+                                                }
+                                            },
+                                            std::task::Poll::Pending => {
+                                                ui.spinner();
+                                            }
+                                            std::task::Poll::Ready(Some(img)) => {
+                                                let img_id = self.scene.borrow().add_image(img.clone());
+                                                self.images.borrow_mut().insert(img_id, RetainedImage::from_color_image(
+                                                        "opened file",
+                                                        ColorImage::from_rgb([img.width() as usize, img.height() as usize], img.as_raw())
+                                                    ),
+                                                );
+                            
+                                                self.edited_image_id = Some(img_id);
+                                                self.loaded_image = Promise::from_ready(None);
+                                            }
                                         }
                                     } else {
-                                        if self.edited_image_id == None {
-                                            match self.loaded_image.poll() {
-                                                std::task::Poll::Ready(None) => (),
-                                                std::task::Poll::Pending => {
-                                                    ui.spinner();
-                                                }
-                                                std::task::Poll::Ready(Some(img)) => {
-                                                    let img_id =
-                                                        &self.scene.borrow().add_image(img.clone());
-                                                    self.images.borrow_mut().insert(
-                                                        *img_id,
-                                                        RetainedImage::from_color_image(
-                                                            "opened file",
-                                                            ColorImage::from_rgb(
-                                                                [
-                                                                    img.width() as usize,
-                                                                    img.height() as usize,
-                                                                ],
-                                                                img.as_raw(),
-                                                            ),
-                                                        ),
-                                                    );
-
-                                                    self.edited_image_id = Some(*img_id);
-                                                    self.loaded_image = Promise::from_ready(None);
-
-                                                    let images_ref = self.images.borrow();
-                                                    let ret_img = images_ref
-                                                        .get(img_id)
-                                                        .unwrap_or(&self.fallback);
-                                                    ret_img
-                                                        .show_size(ui, Vec2::new(100f32, 100f32));
-                                                }
-                                            }
+                                        let images_ref = self.images.borrow();
+                                        let ret_img = images_ref
+                                            .get(&self.edited_image_id.unwrap())
+                                            .unwrap_or(&self.fallback);
+                                        ret_img.show_size(ui, Vec2::new(100f32, 100f32));
+                                    }
+                                }
+                                ui.vertical(|ui|{
+                                    ui.style_mut().wrap = Some(false);
+                                    if ui.button("Save").clicked() {
+                                        self.edited_id = None;
+                                        if self.choosing_colour {
+                                            *tex.as_mut() = Texture::Colour(self.edited_rgb.into());
                                         } else {
-                                            let images_ref = self.images.borrow();
-                                            let ret_img = images_ref
-                                                .get(&self.edited_image_id.unwrap())
-                                                .unwrap_or(&self.fallback);
-                                            ret_img.show_size(ui, Vec2::new(100f32, 100f32));
-                                        }
-
-                                        if ui.button("Open file...").clicked() {
-                                            if let Some(path) = rfd::FileDialog::new().pick_file() {
-                                                let picked_path = path.display().to_string();
-                                                self.loaded_image =
-                                                    Promise::spawn_thread("open_file", move || {
-                                                        let reader = match image::io::Reader::open(
-                                                            &picked_path,
-                                                        ) {
-                                                            Err(_) => {
-                                                                eprintln!("Could not read");
-                                                                return None;
-                                                            }
-                                                            Ok(r) => r,
-                                                        };
-                                                        let dyn_img = match reader.decode() {
-                                                            Err(_) => {
-                                                                eprintln!("Could not decode");
-                                                                return None;
-                                                            }
-                                                            Ok(img) => img,
-                                                        };
-                                                        let rgb_img = dyn_img.to_rgb8();
-                                                        Some(Arc::new(rgb_img))
-                                                    });
-                                                self.edited_image_id = None;
-                                            }
-                                        }
-                                        if ui.button("Set").clicked() {
-                                            if let Some(img_id) = &self.edited_image_id {
-                                                *tex.as_mut() = Texture::Image(*img_id);
+                                            if let Some(img_id) = self.edited_image_id {
+                                                *tex.as_mut() = Texture::Image(img_id);
                                                 self.edited_image_id = None;
                                                 self.loaded_image = Promise::from_ready(None);
                                             }
@@ -444,12 +390,15 @@ impl GuiElement for TextureEditor {
                                     }
                                     if ui.button("Cancel").clicked() {
                                         self.edited_id = None;
+                                        self.edited_image_id = None;
+                                        self.loaded_image = Promise::from_ready(None);
                                     }
                                 });
                             }
                         }
-                    });
-                }
+                        ui.end_row();
+                    }
+                });
             });
     }
 }
