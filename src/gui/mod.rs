@@ -7,6 +7,8 @@ use eframe::egui;
 mod guielements;
 use guielements::*;
 
+mod views;
+
 use crate::scene::Scene;
 
 #[derive(Clone, Copy)]
