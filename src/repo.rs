@@ -1,4 +1,3 @@
-use indexmap::map::{Iter, IterMut};
 use std::{
     fmt::Display,
     hash::Hash,
@@ -97,7 +96,7 @@ pub struct Repository<Type: ?Sized, ContainedType: Deref<Target = Type>> {
 impl<T, C> Repository<T, C>
 where
     T: ?Sized,
-    C: Deref<Target = T>,
+    C: Deref<Target = T> + AsRef<T>,
 {
     pub fn new(default_value: C) -> Self {
         Self {
@@ -120,15 +119,15 @@ where
         id
     }
 
-    pub fn iter(&self) -> Iter<'_, Id<T>, C> {
-        self.resources.iter()
+    pub fn iter(&self) -> impl Iterator<Item = (&Id<T>, &T)> {
+        self.resources.iter().map(|(id, val)| (id, val.as_ref()))
     }
 }
 
 impl<T, C> Repository<T, C>
 where
     T: ?Sized,
-    C: Deref<Target = T> + DerefMut<Target = T>,
+    C: Deref<Target = T> + DerefMut<Target = T> + AsMut<T>,
 {
     pub fn get_defaul_mut(&mut self) -> &mut T {
         &mut self.default_value
@@ -140,8 +139,8 @@ where
             .unwrap_or(&mut self.default_value)
     }
 
-    pub fn iter_mut(&mut self) -> IterMut<'_, Id<T>, C> {
-        self.resources.iter_mut()
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (&Id<T>, &mut T)> {
+        self.resources.iter_mut().map(|(id, val)| (id, val.as_mut()))
     }
 }
 

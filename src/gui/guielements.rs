@@ -1,6 +1,5 @@
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::Arc;
 
 use crate::Point3;
 use crate::camera::CameraSettings;
@@ -220,25 +219,22 @@ fn camera_settings_editor(ui: &mut Ui, c: &mut CameraSettings) {
     });
 }
 
-pub fn load_image(filename: String) -> Promise<Option<Arc<RgbImage>>> {
-    Promise::spawn_thread("open_file", move || {
-        let reader = match image::io::Reader::open(&filename) {
-            Err(_) => {
-                eprintln!("Could not read");
-                return None;
-            }
-            Ok(r) => r,
-        };
-        let dyn_img = match reader.decode() {
-            Err(_) => {
-                eprintln!("Could not decode");
-                return None;
-            }
-            Ok(img) => img,
-        };
-        let rgb_img = dyn_img.to_rgb8();
-        Some(Arc::new(rgb_img))
-    })
+pub fn load_image(filename: String) -> Option<RgbImage> {
+    let reader = match image::io::Reader::open(&filename) {
+        Err(_) => {
+            eprintln!("Could not read");
+            return None;
+        }
+        Ok(r) => r,
+    };
+    let dyn_img = match reader.decode() {
+        Err(_) => {
+            eprintln!("Could not decode");
+            return None;
+        }
+        Ok(img) => img,
+    };
+    Some(dyn_img.to_rgb8())
 }
 
 struct TextureEditor {
