@@ -7,95 +7,33 @@ use crate::repo::{Id, Repo};
 use crate::texture::Texture;
 use crate::{render, scene::Scene};
 use egui::color_picker::show_color;
-use egui::{Color32, Response, Ui, ColorImage};
-use egui_extras::{RetainedImage};
+use egui::{Color32, Response, Ui};
+
 use image::RgbImage;
 use poll_promise::Promise;
 
-use super::views::{self, View};
+use super::views;
 
 pub trait GuiElement {
     fn show(&mut self, ctx: &egui::Context);
 }
 
-pub struct ImageGuiElement {
-    title: String,
-    image: Promise<RetainedImage>,
-    dimensions: (u32, u32),
-    is_open: bool,
-}
-
-impl ImageGuiElement {
-    pub fn new(
-        camera_id: usize,
-        render_id: usize,
-        img_dimensions: (u32, u32),
-        scene: Scene,
-    ) -> Self {
-        let title = format!("Render {render_id} for camera {camera_id}");
-        Self {
-            title,
-            image: Promise::spawn_thread("debug-renderer", move || {
-                let mut image = RgbImage::new(img_dimensions.0, img_dimensions.1);
-                render(
-                    &mut image,
-                    &scene.cameras[camera_id].build_with_dimensions(img_dimensions.0, img_dimensions.1),
-                    &scene.hittable,
-                    &scene.textures.borrow().get(scene.background),
-                    &scene.materials,
-                    &scene.textures.borrow(),
-                    &scene.images.borrow(),
-                    5,
-                    10,
-                );
-                RetainedImage::from_color_image(
-                    "render",
-                    ColorImage::from_rgb(
-                        [image.width() as usize, image.height() as usize],
-                        image.as_raw(),
-                    ),
-                )
-            }),
-            dimensions: img_dimensions,
-            is_open: true,
-        }
-    }
-}
-
-impl GuiElement for ImageGuiElement {
-    fn show(&mut self, ctx: &egui::Context) {
-        egui::Window::new(&self.title)
-            .open(&mut self.is_open)
-            .min_width(self.dimensions.0 as f32)
-            .min_height(self.dimensions.1 as f32)
-            .show(ctx, |ui| {
-                ui.vertical_centered(|ui| match self.image.ready() {
-                    None => {
-                        ui.spinner();
-                        ui.label("Rendering in progress...")
-                    }
-                    Some(image) => image.show(ui),
-                });
-            });
-    }
-}
-
 pub struct SceneEditor {
     title: String,
     scene: Rc<RefCell<Scene>>,
-    sub_elements: Vec<Box<dyn GuiElement>>,
-    texture_editor: TextureEditor,
+    
+    texture_editor: (views::TextureEditor, bool),
+
+    previews: Vec<(views::ImageView, bool)>,
 }
 
 impl SceneEditor {
     pub fn new(title: impl Into<String>, scene: Rc<RefCell<Scene>>) -> Self {
-        let mut texture_editor = TextureEditor::new(scene.clone());
-        texture_editor.is_open = false;
         Self {
             title: title.into(),
-            scene,
-            sub_elements: vec![],
-            texture_editor,
+            scene: scene.clone(),
+            texture_editor: (views::TextureEditor::new(scene), false),
+            previews: Vec::new(),
         }
     }
 }
@@ -104,7 +42,11 @@ impl GuiElement for SceneEditor {
     fn show(&mut self, ctx: &egui::Context) {
         let pos = egui::pos2(10.0, 10.0);
 
-        self.texture_editor.show(ctx);
+        show_view_as_window(ctx, &mut self.texture_editor.0, &mut self.texture_editor.1, true);
+
+        for (preview, open) in &mut self.previews {
+            show_view_as_window(ctx, preview, open, false);
+        }
 
         egui::Window::new(&self.title)
             .default_pos(pos)
@@ -115,7 +57,7 @@ impl GuiElement for SceneEditor {
                     if ui.link("Objects").clicked() {};
                     if ui.link("Materials").clicked() {};
                     if ui.link("Textures").clicked() {
-                        self.texture_editor.is_open = true;
+                        self.texture_editor.1 = true;
                     }
                 });
                 ui.collapsing("Background", |ui| {
@@ -148,23 +90,29 @@ impl GuiElement for SceneEditor {
                         camera_settings_editor(ui, &mut self.scene.borrow_mut().cameras[c]);
                         ui.separator();
                         if ui.button("Render").clicked() {
-                            let guielement = Box::new(ImageGuiElement::new(
-                                c,
-                                self.sub_elements.len(),
-                                (400, 400),
-                                (*self.scene.borrow()).clone(),
-                            ));
-                            self.sub_elements.push(guielement);
+                            let title = format!("Render {} for Camera {}", self.previews.len(), c);
+                            let scene = (*self.scene.borrow()).clone();
+                            let preview = views::ImageView::new(title, Promise::spawn_thread("debug-renderer", move || {
+                                let mut image = RgbImage::new(400, 400);
+                                render(
+                                    &mut image,
+                                    &scene.cameras[c].build_with_dimensions(400, 400),
+                                    &scene.hittable,
+                                    &scene.textures.borrow().get(scene.background),
+                                    &scene.materials,
+                                    &scene.textures.borrow(),
+                                    &scene.images.borrow(),
+                                    5,
+                                    10,
+                                );
+                                image
+                            }));
+                            self.previews.push((preview, true));
                         }
                         ui.separator();
                     });
                 }
             });
-        // FIXME: Issues with length not updating after element is removed. sometimes causes crash when closing windows
-        //self.sub_elements = self.sub_elements.drain(..).filter(|(_e, is_open)| *is_open).collect();
-        for e in &mut self.sub_elements {
-            e.show(ctx);
-        }
     }
 }
 
@@ -219,43 +167,10 @@ fn camera_settings_editor(ui: &mut Ui, c: &mut CameraSettings) {
     });
 }
 
-pub fn load_image(filename: String) -> Option<RgbImage> {
-    let reader = match image::io::Reader::open(&filename) {
-        Err(_) => {
-            eprintln!("Could not read");
-            return None;
-        }
-        Ok(r) => r,
-    };
-    let dyn_img = match reader.decode() {
-        Err(_) => {
-            eprintln!("Could not decode");
-            return None;
-        }
-        Ok(img) => img,
-    };
-    Some(dyn_img.to_rgb8())
-}
-
-struct TextureEditor {
-    view: views::TextureEditor,
-    pub is_open: bool,
-}
-
-impl TextureEditor {
-    fn new(scene: Rc<RefCell<Scene>>) -> Self {
-        TextureEditor {
-            view: views::TextureEditor::new(scene),
-            is_open: true,
-        }
-    }
-}
-
-impl GuiElement for TextureEditor {
-    fn show(&mut self, ctx: &egui::Context) {
-        egui::Window::new("Textures")
-            .open(&mut self.is_open)
-            .vscroll(true)
-            .show(ctx, |ui| self.view.ui(ui));
-    }
+fn show_view_as_window(ctx: &egui::Context, view: &mut dyn views::View, open: &mut bool, vscroll: bool) {
+    egui::Window::new(view.title())
+            .open(open)
+            .vscroll(vscroll)
+            .resizable(true)
+            .show(ctx, |ui| view.ui(ui));
 }

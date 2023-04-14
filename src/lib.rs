@@ -13,7 +13,7 @@ pub mod gui;
 pub mod hittable;
 pub mod material;
 pub mod texture;
-// pub mod renderer;
+mod io;
 mod repo;
 pub mod scene;
 
