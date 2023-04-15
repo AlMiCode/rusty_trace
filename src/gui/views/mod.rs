@@ -1,4 +1,4 @@
-use egui::{Ui, ColorImage};
+use egui::{ColorImage, Ui};
 
 mod texture_editor;
 use egui_extras::RetainedImage;

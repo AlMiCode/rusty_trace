@@ -228,9 +228,33 @@ pub struct Rect {
 impl Rect {
     pub fn new(p0: &Point3, n: f64, m: f64, plane: Plane, material_id: Id<dyn Material>) -> Self {
         match plane {
-            Plane::XY => Self { n0: p0.x, m0: p0.y, n1: p0.x + n, m1: p0.y + m, k: p0.z, plane, material_id },
-            Plane::XZ => Self { n0: p0.x, m0: p0.z, n1: p0.x + n, m1: p0.z + m, k: p0.y, plane, material_id },
-            Plane::YZ => Self { n0: p0.y, m0: p0.z, n1: p0.y + n, m1: p0.z + m, k: p0.x, plane, material_id }
+            Plane::XY => Self {
+                n0: p0.x,
+                m0: p0.y,
+                n1: p0.x + n,
+                m1: p0.y + m,
+                k: p0.z,
+                plane,
+                material_id,
+            },
+            Plane::XZ => Self {
+                n0: p0.x,
+                m0: p0.z,
+                n1: p0.x + n,
+                m1: p0.z + m,
+                k: p0.y,
+                plane,
+                material_id,
+            },
+            Plane::YZ => Self {
+                n0: p0.y,
+                m0: p0.z,
+                n1: p0.y + n,
+                m1: p0.z + m,
+                k: p0.x,
+                plane,
+                material_id,
+            },
         }
     }
 }

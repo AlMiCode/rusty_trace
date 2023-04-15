@@ -140,7 +140,9 @@ where
     }
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = (&Id<T>, &mut T)> {
-        self.resources.iter_mut().map(|(id, val)| (id, val.as_mut()))
+        self.resources
+            .iter_mut()
+            .map(|(id, val)| (id, val.as_mut()))
     }
 }
 

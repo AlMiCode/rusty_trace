@@ -11,11 +11,11 @@ use std::io::Write;
 pub mod camera;
 pub mod gui;
 pub mod hittable;
-pub mod material;
-pub mod texture;
 mod io;
+pub mod material;
 mod repo;
 pub mod scene;
+pub mod texture;
 
 pub type Point3 = cgmath::Point3<f64>;
 pub type Vector3 = cgmath::Vector3<f64>;

@@ -5,9 +5,9 @@ use egui_extras::RetainedImage;
 use image::RgbImage;
 use indexmap::IndexMap;
 
-use crate::{repo::Id, scene::Scene, texture::Texture, io::load_image};
+use crate::{io::load_image, repo::Id, scene::Scene, texture::Texture};
 
-use super::{View, Image};
+use super::{Image, View};
 
 pub struct TextureEditor {
     scene: Rc<RefCell<Scene>>,
@@ -17,7 +17,7 @@ pub struct TextureEditor {
     edited_image_id: Option<Id<RgbImage>>,
     choosing_colour: bool,
 
-    //RetaindedImage storage. Possibly moved into its own window.
+    // RetaindedImage storage. Possibly moved into its own window.
     images: RefCell<IndexMap<Id<RgbImage>, RetainedImage>>,
     fallback: RetainedImage,
 }
