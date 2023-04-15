@@ -142,8 +142,8 @@ impl Hittable for Translate {
 
 #[derive(Clone)]
 pub struct Sphere {
-    center: Point3,
-    radius: f64,
+    pub center: Point3,
+    pub radius: f64,
     material_id: Id<dyn Material>,
 }
 

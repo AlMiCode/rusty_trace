@@ -4,10 +4,9 @@ use std::rc::Rc;
 use crate::camera::CameraSettings;
 use crate::repo::{Id, Repo};
 use crate::texture::Texture;
-use crate::Point3;
 use crate::{render, scene::Scene};
 use egui::color_picker::show_color;
-use egui::{Color32, Response, Ui};
+use egui::{Color32, Ui};
 
 use image::RgbImage;
 use poll_promise::Promise;
@@ -80,7 +79,7 @@ impl GuiElement for SceneEditor {
                             |ui| {
                                 ui.label("Position");
                                 let mut c = self.scene.borrow().hittable[i].as_ref().get_position();
-                                if point3_editor(ui, &mut c).changed() {
+                                if views::point3_editor(ui, &mut c).changed() {
                                     let mut scene_ref_mut = self.scene.borrow_mut();
                                     scene_ref_mut.hittable[i].as_mut().set_position(c);
                                 }
@@ -123,16 +122,6 @@ impl GuiElement for SceneEditor {
     }
 }
 
-fn point3_editor(ui: &mut Ui, p: &mut Point3) -> Response {
-    ui.horizontal(|ui| {
-        let x_field = ui.add(egui::DragValue::new(&mut p.x).speed(0.05).prefix("X: "));
-        let y_field = ui.add(egui::DragValue::new(&mut p.y).speed(0.05).prefix("Y: "));
-        let z_field = ui.add(egui::DragValue::new(&mut p.z).speed(0.05).prefix("Z: "));
-        x_field.union(y_field).union(z_field)
-    })
-    .inner
-}
-
 fn texture_picker(ui: &mut Ui, tex_id: &mut Id<Texture>, repo: &Repo<Texture>) {
     egui::ComboBox::from_label("")
         .selected_text(format!("Texture {}", tex_id))
@@ -166,11 +155,11 @@ fn camera_settings_editor(ui: &mut Ui, c: &mut CameraSettings) {
         ui.end_row();
 
         ui.label("Look At:");
-        point3_editor(ui, &mut c.look_at);
+        views::point3_editor(ui, &mut c.look_at);
         ui.end_row();
 
         ui.label("Look From:");
-        point3_editor(ui, &mut c.look_from);
+        views::point3_editor(ui, &mut c.look_from);
         ui.end_row();
     });
 }
