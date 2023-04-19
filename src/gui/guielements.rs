@@ -21,7 +21,8 @@ pub struct SceneEditor {
     title: String,
     scene: Rc<RefCell<Scene>>,
 
-    texture_editor: (views::TextureEditor, bool),
+    texture_editor: (views::OldTextureEditor, bool),
+    new_texture_editor: views::TextureEditor,
 
     previews: Vec<(views::ImageView, bool)>,
 }
@@ -31,7 +32,8 @@ impl SceneEditor {
         Self {
             title: title.into(),
             scene: scene.clone(),
-            texture_editor: (views::TextureEditor::new(scene), false),
+            texture_editor: (views::OldTextureEditor::new(scene), false),
+            new_texture_editor: views::TextureEditor::mock(),
             previews: Vec::new(),
         }
     }
@@ -40,6 +42,13 @@ impl SceneEditor {
 impl GuiElement for SceneEditor {
     fn show(&mut self, ctx: &egui::Context) {
         let pos = egui::pos2(10.0, 10.0);
+
+        show_view_as_window(
+            ctx,
+            &mut self.new_texture_editor,
+            &mut self.texture_editor.1,
+            true,
+        );
 
         show_view_as_window(
             ctx,

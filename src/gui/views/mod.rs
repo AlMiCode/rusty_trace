@@ -3,6 +3,7 @@ use egui::{ColorImage, Ui, Response};
 mod texture_editor;
 use egui_extras::RetainedImage;
 use image::RgbImage;
+pub use texture_editor::OldTextureEditor;
 pub use texture_editor::TextureEditor;
 
 mod image_view;
