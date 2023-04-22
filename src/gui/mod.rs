@@ -1,7 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release //
 
-use std::{cell::RefCell, rc::Rc};
-
 use eframe::egui;
 
 mod guielements;
@@ -24,10 +22,10 @@ pub struct Gui {
 impl Default for Gui {
     fn default() -> Self {
         let scene = Scene::cornell_box();
-        let scene_rc = Rc::new(RefCell::new(scene));
-        let scene_editor = SceneEditor::new(String::from("Scene editor"), scene_rc);
+        //let scene_rc = Rc::new(RefCell::new(scene));
+        //let scene_editor = SceneEditor::new(String::from("Scene editor"), scene_rc);
         Self {
-            elements: vec![Box::new(scene_editor)],
+            elements: vec![Box::new(ProjectEditor::from_scene(scene))],
         }
     }
 }
@@ -37,9 +35,9 @@ impl Gui {
         let options = eframe::NativeOptions {
             ..Default::default()
         };
-    
+
         eframe::run_native(title, options, Box::new(|_cc| Box::new(self)))
-    }    
+    }
 }
 
 impl eframe::App for Gui {

@@ -8,11 +8,10 @@ edition = "2021"
 [dependencies]
 cgmath = "0.18.0"
 image = { version = "0.24.5", features = ["jpeg", "png"] }
-anyhow = "1.0.69"
 egui = "0.21.0"
 eframe = "0.21.3"
 egui_extras = { version = "0.21.0", features = ["image"] }
 poll-promise = "0.2.0"
-indexmap = "1.9.2"
 rfd = "0.11.3"
 fastrand = "1.9.0"
+enum_dispatch = "0.3.11"

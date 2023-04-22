@@ -9,7 +9,7 @@ pub struct HitRecord {
     pub distance: f64,
     pub uv: (f64, f64),
     pub front_face: bool,
-    pub material_id: Id<dyn Material>,
+    pub material_id: Id<Material>,
 }
 
 impl HitRecord {
@@ -18,7 +18,7 @@ impl HitRecord {
         distance: f64,
         outward_normal: Vector3,
         uv: (f64, f64),
-        material_id: Id<dyn Material>,
+        material_id: Id<Material>,
     ) -> Self {
         let front_face = ray.direction.dot(outward_normal) < 0.0;
         let normal = if front_face {
@@ -144,11 +144,11 @@ impl Hittable for Translate {
 pub struct Sphere {
     pub center: Point3,
     pub radius: f64,
-    material_id: Id<dyn Material>,
+    material_id: Id<Material>,
 }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: f64, material_id: Id<dyn Material>) -> Self {
+    pub fn new(center: Point3, radius: f64, material_id: Id<Material>) -> Self {
         Sphere {
             center,
             radius,
@@ -222,11 +222,11 @@ pub struct Rect {
     k: f64,
     plane: Plane,
 
-    material_id: Id<dyn Material>,
+    material_id: Id<Material>,
 }
 
 impl Rect {
-    pub fn new(p0: &Point3, n: f64, m: f64, plane: Plane, material_id: Id<dyn Material>) -> Self {
+    pub fn new(p0: &Point3, n: f64, m: f64, plane: Plane, material_id: Id<Material>) -> Self {
         match plane {
             Plane::XY => Self {
                 n0: p0.x,

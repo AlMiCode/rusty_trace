@@ -1,30 +1,24 @@
-use image::RgbImage;
-
-use crate::{
-    repo::{ARepo, Id},
-    rgb_to_vec, Colour,
-};
+use crate::{io, rgb_to_vec, Colour};
 
 #[derive(Clone)]
 pub enum Texture {
     Colour(Colour),
-    Image(Id<RgbImage>),
+    Image(io::Image),
 }
 
 impl Texture {
-    pub fn colour_at(&self, u: f64, v: f64, images: &ARepo<RgbImage>) -> Colour {
+    pub fn colour_at(&self, u: f64, v: f64) -> Colour {
         match self {
             Self::Colour(c) => c.clone(),
-            Self::Image(img_id) => {
-                let img = images.get(*img_id);
-                let (width, height) = img.dimensions();
+            Self::Image(img) => {
+                let (width, height) = img.image().dimensions();
                 let mut i = (u.clamp(0.0, 1.0) * (width as f64)) as u32;
                 let mut j = (v.clamp(0.0, 1.0) * (height as f64)) as u32;
 
                 i = if i >= width { i - 1 } else { i };
                 j = if j >= height { j - 1 } else { j };
 
-                rgb_to_vec(img.get_pixel(i, j))
+                rgb_to_vec(img.image().get_pixel(i, j))
             }
         }
     }
@@ -36,8 +30,14 @@ impl From<Colour> for Texture {
     }
 }
 
-impl From<Id<RgbImage>> for Texture {
-    fn from(value: Id<RgbImage>) -> Self {
+impl From<io::Image> for Texture {
+    fn from(value: io::Image) -> Self {
         Texture::Image(value)
+    }
+}
+
+impl Default for Texture {
+    fn default() -> Self {
+        Texture::Colour([0.5, 0.5, 0.5].into())
     }
 }

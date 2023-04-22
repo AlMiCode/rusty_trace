@@ -1,9 +1,9 @@
-use camera::Camera;
+use camera::CameraSettings;
 use cgmath::{ElementWise, InnerSpace, Zero};
 use hittable::{Hittable, HittableVec, Sphere};
 use image::{Rgb, RgbImage};
-use material::Material;
-use repo::{ARepo, Repo};
+use material::{Material, MaterialTrait};
+use repo::VecRepo;
 use texture::Texture;
 
 use std::io::Write;
@@ -23,18 +23,19 @@ pub type Colour = cgmath::Vector3<f32>;
 
 pub fn render(
     image: &mut RgbImage,
-    camera: &Camera,
+    camera_settings: &CameraSettings,
     scene: &HittableVec,
     background: &Texture,
-    materials: &Repo<dyn Material>,
-    textures: &Repo<Texture>,
-    images: &ARepo<RgbImage>,
+    materials: &VecRepo<Material>,
+    textures: &VecRepo<Texture>,
     sample_count: u32,
     depth: u32,
 ) {
     use std::time::Instant;
     let now = Instant::now();
+
     let (width, height) = image.dimensions();
+    let camera = camera_settings.build_with_dimensions(width, height);
     for y in 0..height {
         for x in 0..width {
             let mut colour = Colour::zero();
@@ -43,7 +44,7 @@ pub fn render(
                 let v = y as f64 / (height - 1) as f64;
                 let r = camera.get_ray(u, v);
 
-                colour += cast_ray(r, scene, background, materials, textures, images, depth)
+                colour += cast_ray(r, scene, background, materials, textures, depth)
             }
             let pixel: Rgb<u8> = vec_to_rgb(gamma_correction(colour / sample_count as f32));
             image.put_pixel(x, height - y - 1, pixel);
@@ -75,9 +76,8 @@ pub fn cast_ray(
     ray: Ray,
     hittable: &dyn Hittable,
     background: &Texture,
-    materials: &Repo<dyn Material>,
-    textures: &Repo<Texture>,
-    images: &ARepo<RgbImage>,
+    materials: &VecRepo<Material>,
+    textures: &VecRepo<Texture>,
     depth: u32,
 ) -> Colour {
     if depth == 0 {
@@ -86,11 +86,8 @@ pub fn cast_ray(
     if let Some(hit) = hittable.hit_bounded(&ray, 0.0001, f64::INFINITY) {
         let emitted = materials
             .get(hit.material_id)
-            .emit(hit.uv.0, hit.uv.1, textures, images);
-        match materials
-            .get(hit.material_id)
-            .scatter(&ray, &hit, textures, images)
-        {
+            .emit(hit.uv.0, hit.uv.1, textures);
+        match materials.get(hit.material_id).scatter(&ray, &hit, textures) {
             None => emitted,
             Some(scattered) => {
                 scattered.attenuation.mul_element_wise(cast_ray(
@@ -99,14 +96,13 @@ pub fn cast_ray(
                     background,
                     materials,
                     textures,
-                    images,
                     depth - 1,
                 )) + emitted
             }
         }
     } else {
         let (u, v) = Sphere::get_uv(&ray.direction);
-        background.colour_at(u, v, images)
+        background.colour_at(u, v)
     }
 }
 

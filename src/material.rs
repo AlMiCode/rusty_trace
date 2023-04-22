@@ -1,8 +1,8 @@
 use cgmath::{InnerSpace, Zero};
-use image::RgbImage;
+use enum_dispatch::enum_dispatch;
 
 use crate::hittable::HitRecord;
-use crate::repo::{ARepo, Id, Repo};
+use crate::repo::{Id, VecRepo};
 use crate::texture::Texture;
 use crate::{random_f64, random_vec_in_sphere, Colour, Ray, Vector3};
 
@@ -22,42 +22,34 @@ pub struct ScatterRecord {
     pub attenuation: Colour,
 }
 
-pub trait Material: Sync + Send + MaterialClone {
+#[enum_dispatch(MaterialTrait)]
+#[derive(Clone)]
+pub enum Material {
+    Lambertian,
+    Metal,
+    Dielectric,
+    DiffuseLight,
+    Isotropic,
+}
+
+impl Default for Material {
+    fn default() -> Self {
+        Material::from(Lambertian {
+            albedo: Id::default(),
+        })
+    }
+}
+
+#[enum_dispatch]
+pub trait MaterialTrait {
     fn scatter(
         &self,
         ray: &Ray,
         hit: &HitRecord,
-        textures: &Repo<Texture>,
-        images: &ARepo<RgbImage>,
+        textures: &VecRepo<Texture>,
     ) -> Option<ScatterRecord>;
-    fn emit(
-        &self,
-        _u: f64,
-        _v: f64,
-        _textures: &Repo<Texture>,
-        _images: &ARepo<RgbImage>,
-    ) -> Colour {
+    fn emit(&self, _u: f64, _v: f64, _textures: &VecRepo<Texture>) -> Colour {
         Colour::zero()
-    }
-}
-
-pub trait MaterialClone {
-    fn clone_box(&self) -> Box<dyn Material>;
-}
-
-impl<T> MaterialClone for T
-where
-    T: 'static + Material + Clone,
-{
-    fn clone_box(&self) -> Box<dyn Material> {
-        Box::new(self.clone())
-    }
-}
-
-// We can now implement Clone manually by forwarding to clone_box.
-impl Clone for Box<dyn Material> {
-    fn clone(&self) -> Box<dyn Material> {
-        self.clone_box()
     }
 }
 
@@ -85,13 +77,12 @@ pub struct Isotropic {
     pub albedo: Id<Texture>,
 }
 
-impl Material for Lambertian {
+impl MaterialTrait for Lambertian {
     fn scatter(
         &self,
         _ray: &Ray,
         hit: &HitRecord,
-        textures: &Repo<Texture>,
-        images: &ARepo<RgbImage>,
+        textures: &VecRepo<Texture>,
     ) -> Option<ScatterRecord> {
         let scatter_dir = hit.normal + random_vec_in_sphere();
         let scatter_dir = if scatter_dir.magnitude2() < 0.000001 {
@@ -101,28 +92,23 @@ impl Material for Lambertian {
         };
         Some(ScatterRecord {
             ray: Ray::new(hit.point, scatter_dir),
-            attenuation: textures
-                .get(self.albedo)
-                .colour_at(hit.uv.0, hit.uv.1, images),
+            attenuation: textures.get(self.albedo).colour_at(hit.uv.0, hit.uv.1),
         })
     }
 }
 
-impl Material for Metal {
+impl MaterialTrait for Metal {
     fn scatter(
         &self,
         ray: &Ray,
         hit: &HitRecord,
-        textures: &Repo<Texture>,
-        images: &ARepo<RgbImage>,
+        textures: &VecRepo<Texture>,
     ) -> Option<ScatterRecord> {
         let dir = reflect(&ray.direction, &hit.normal) + random_vec_in_sphere() * self.fuzz;
         if dir.dot(hit.normal) > 0.0 {
             Some(ScatterRecord {
                 ray: Ray::new(hit.point, dir),
-                attenuation: textures
-                    .get(self.albedo)
-                    .colour_at(hit.uv.0, hit.uv.1, images),
+                attenuation: textures.get(self.albedo).colour_at(hit.uv.0, hit.uv.1),
             })
         } else {
             None
@@ -138,13 +124,12 @@ impl Dielectric {
     }
 }
 
-impl Material for Dielectric {
+impl MaterialTrait for Dielectric {
     fn scatter(
         &self,
         ray: &Ray,
         hit: &HitRecord,
-        _textures: &Repo<Texture>,
-        _images: &ARepo<RgbImage>,
+        _textures: &VecRepo<Texture>,
     ) -> Option<ScatterRecord> {
         let refraction_ratio = if hit.front_face {
             1.0 / self.refractive_index
@@ -169,34 +154,30 @@ impl Material for Dielectric {
     }
 }
 
-impl Material for DiffuseLight {
+impl MaterialTrait for DiffuseLight {
     fn scatter(
         &self,
         _ray: &Ray,
         _hit: &HitRecord,
-        _textures: &Repo<Texture>,
-        _images: &ARepo<RgbImage>,
+        _textures: &VecRepo<Texture>,
     ) -> Option<ScatterRecord> {
         None
     }
-    fn emit(&self, u: f64, v: f64, textures: &Repo<Texture>, images: &ARepo<RgbImage>) -> Colour {
-        textures.get(self.emit).colour_at(u, v, images) * self.amplify
+    fn emit(&self, u: f64, v: f64, textures: &VecRepo<Texture>) -> Colour {
+        textures.get(self.emit).colour_at(u, v) * self.amplify
     }
 }
 
-impl Material for Isotropic {
+impl MaterialTrait for Isotropic {
     fn scatter(
         &self,
         _ray: &Ray,
         hit: &HitRecord,
-        textures: &Repo<Texture>,
-        images: &ARepo<RgbImage>,
+        textures: &VecRepo<Texture>,
     ) -> Option<ScatterRecord> {
         Some(ScatterRecord {
             ray: Ray::new(hit.point, random_vec_in_sphere()),
-            attenuation: textures
-                .get(self.albedo)
-                .colour_at(hit.uv.0, hit.uv.1, images),
+            attenuation: textures.get(self.albedo).colour_at(hit.uv.0, hit.uv.1),
         })
     }
 }

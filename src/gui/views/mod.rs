@@ -1,13 +1,15 @@
-use egui::{ColorImage, Ui, Response};
+use egui::{ColorImage, Response, Ui};
 
 mod texture_editor;
 use egui_extras::RetainedImage;
 use image::RgbImage;
-pub use texture_editor::OldTextureEditor;
 pub use texture_editor::TextureEditor;
 
 mod image_view;
 pub use image_view::ImageView;
+
+mod cameras_editor;
+pub use cameras_editor::CamerasEditor;
 
 use crate::Point3;
 
@@ -40,4 +42,10 @@ pub fn point3_editor(ui: &mut Ui, p: &mut Point3) -> Response {
         x_field.union(y_field).union(z_field)
     })
     .inner
+}
+
+fn grid(ui: &mut Ui, name: &'static str, num_columns: usize, stripped: bool) -> egui::Grid {
+    egui::Grid::new(ui.auto_id_with(name))
+        .num_columns(num_columns)
+        .striped(stripped)
 }
