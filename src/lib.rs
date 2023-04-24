@@ -1,9 +1,9 @@
-use camera::CameraSettings;
 use cgmath::{ElementWise, InnerSpace, Zero};
-use hittable::{Hittable, HittableVec, Sphere};
+use hittable::{Hittable, Sphere};
 use image::{Rgb, RgbImage};
 use material::{Material, MaterialTrait};
 use repo::VecRepo;
+use scene::Scene;
 use texture::Texture;
 
 use std::io::Write;
@@ -21,21 +21,22 @@ pub type Point3 = cgmath::Point3<f64>;
 pub type Vector3 = cgmath::Vector3<f64>;
 pub type Colour = cgmath::Vector3<f32>;
 
-pub fn render(
-    image: &mut RgbImage,
-    camera_settings: &CameraSettings,
-    scene: &HittableVec,
-    background: &Texture,
-    materials: &VecRepo<Material>,
-    textures: &VecRepo<Texture>,
-    sample_count: u32,
-    depth: u32,
-) {
+pub fn render(image: &mut RgbImage, scene: &Scene, sample_count: u32, depth: u32) {
     use std::time::Instant;
     let now = Instant::now();
 
+    let Scene {
+        hittable,
+        camera,
+        background,
+        materials,
+        textures,
+    } = scene;
+
     let (width, height) = image.dimensions();
-    let camera = camera_settings.build_with_dimensions(width, height);
+    let camera = camera.build_with_dimensions(width, height);
+    let background = textures.get(*background);
+
     for y in 0..height {
         for x in 0..width {
             let mut colour = Colour::zero();
@@ -44,18 +45,15 @@ pub fn render(
                 let v = y as f64 / (height - 1) as f64;
                 let r = camera.get_ray(u, v);
 
-                colour += cast_ray(r, scene, background, materials, textures, depth)
+                colour += cast_ray(r, hittable, background, materials, textures, depth)
             }
             let pixel: Rgb<u8> = vec_to_rgb(gamma_correction(colour / sample_count as f32));
             image.put_pixel(x, height - y - 1, pixel);
         }
         print!("\r{}/{} done", y + 1, height);
-        if let Err(_e) = std::io::stdout().flush() {
-            panic!("could not flush stdout");
-        }
+        std::io::stdout().flush().expect("could not flush stdin");
     }
-    let elapsed = now.elapsed();
-    println!("Elapsed: {:.2?}", elapsed);
+    println!("\nElapsed: {:.2?}", now.elapsed());
 }
 
 pub struct Ray {

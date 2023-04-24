@@ -4,12 +4,11 @@ use egui::{color_picker::show_color, Color32, ColorImage, Ui};
 use egui_extras::RetainedImage;
 
 use crate::{
-    io::load_image,
     repo::{Id, VecRepo},
     texture::Texture,
 };
 
-use super::{grid, Image, View};
+use super::{grid, image_to_retained, View};
 use crate::io;
 
 #[derive(Default)]
@@ -40,7 +39,6 @@ impl TextureEditorState {
 pub struct TextureEditor {
     editor_state: TextureEditorState,
     textures: Vec<Texture>,
-    images: Vec<io::Image>,
     retained_images: HashMap<io::Image, RetainedImage>,
 }
 
@@ -49,7 +47,6 @@ impl Default for TextureEditor {
         Self {
             editor_state: TextureEditorState::default(),
             textures: vec![Texture::default()],
-            images: vec![],
             retained_images: HashMap::new(),
         }
     }
@@ -60,7 +57,6 @@ impl From<VecRepo<Texture>> for TextureEditor {
         Self {
             editor_state: TextureEditorState::default(),
             textures: value.into(),
-            images: vec![],
             retained_images: HashMap::new(),
         }
     }
@@ -95,12 +91,9 @@ impl TextureEditor {
         self.texture_preview(ui, &self.textures[tex_id.id as usize]);
     }
 
-    fn add_image(&mut self, image: io::Image) -> usize {
-        let id = self.images.len();
+    fn add_image(&mut self, image: io::Image) {
         self.retained_images
-            .insert(image.clone(), Image(&image.image()).into());
-        self.images.push(image);
-        id
+            .insert(image.clone(), image_to_retained(&image));
     }
 
     fn image_preview(&self, ui: &mut Ui, img: &io::Image, max_size: f32) {
@@ -146,9 +139,8 @@ impl TextureEditor {
             if ui.button("Open file...").clicked() {
                 state.edited_image = rfd::FileDialog::new()
                     .pick_file()
-                    .and_then(|path| load_image(path.display().to_string()))
-                    .map(|img| {
-                        let image = io::Image::new(img);
+                    .and_then(|path| io::Image::try_open(&path).ok())
+                    .map(|image| {
                         self.add_image(image.clone());
                         image
                     });

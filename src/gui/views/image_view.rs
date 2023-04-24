@@ -1,4 +1,4 @@
-use super::{Image, View};
+use super::{image_to_retained, View};
 use egui::Ui;
 use egui_extras::RetainedImage;
 use image::RgbImage;
@@ -31,7 +31,7 @@ impl View for ImageView {
             Some(img.size())
         } else {
             if let Some(img) = self.promise.ready() {
-                self.image = Some(Image(img).into());
+                self.image = Some(image_to_retained(img));
             }
             ui.spinner();
             None

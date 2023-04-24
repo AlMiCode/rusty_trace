@@ -4,14 +4,6 @@ use std::{
     sync::Arc,
 };
 
-pub fn load_image(filename: String) -> Option<image::RgbImage> {
-    try_load_image(&filename.into()).ok()
-}
-
-pub fn try_load_image(filename: &std::path::PathBuf) -> image::ImageResult<image::RgbImage> {
-    Ok(image::io::Reader::open(filename)?.decode()?.to_rgb8())
-}
-
 #[derive(Clone, Eq)]
 pub struct Image {
     image: Arc<image::RgbImage>,
@@ -51,5 +43,12 @@ impl PartialEq for Image {
 impl Hash for Image {
     fn hash<H: Hasher>(&self, state: &mut H) {
         state.write_u64(self.hash);
+    }
+}
+
+/// I know this is out of `gui` module, but i only can implement it here. Seems like a good compromise.
+impl<'a> Into<&'a image::RgbImage> for &'a Image {
+    fn into(self) -> &'a image::RgbImage {
+        self.image()
     }
 }

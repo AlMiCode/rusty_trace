@@ -90,16 +90,7 @@ impl GuiElement for ProjectEditor {
                 title,
                 Promise::spawn_thread("debug-renderer", move || {
                     let mut image = RgbImage::new(400, 400);
-                    render(
-                        &mut image,
-                        &scene.camera,
-                        &scene.hittable,
-                        &scene.textures.get(scene.background),
-                        &scene.materials,
-                        &scene.textures,
-                        5,
-                        10,
-                    );
+                    render(&mut image, &scene, 5, 10);
                     image
                 }),
             );
