@@ -1,7 +1,8 @@
 use cgmath::{ElementWise, InnerSpace, Zero};
 use hittable::{Hittable, Sphere};
-use image::{Rgb, RgbImage};
+use image::{DynamicImage, Rgb, Rgb32FImage, RgbImage};
 use material::{Material, MaterialTrait};
+use oidn::OpenImageDenoise;
 use repo::VecRepo;
 use scene::Scene;
 use texture::Texture;
@@ -13,6 +14,7 @@ pub mod gui;
 pub mod hittable;
 mod io;
 pub mod material;
+pub mod oidn;
 mod repo;
 pub mod scene;
 pub mod texture;
@@ -54,6 +56,20 @@ pub fn render(image: &mut RgbImage, scene: &Scene, sample_count: u32, depth: u32
         std::io::stdout().flush().expect("could not flush stdin");
     }
     println!("\nElapsed: {:.2?}", now.elapsed());
+    *image = denoise(image.clone());
+}
+
+fn denoise(image: RgbImage) -> RgbImage {
+    let image = DynamicImage::ImageRgb8(image).into_rgb32f();
+    let mut output = image.as_raw().clone();
+
+    OpenImageDenoise::denoise(
+        image.as_raw(),
+        (image.width() as usize, image.height() as usize),
+        &mut output,
+    );
+    let output = Rgb32FImage::from_vec(image.width(), image.height(), output).unwrap();
+    DynamicImage::ImageRgb32F(output).into_rgb8()
 }
 
 pub struct Ray {
