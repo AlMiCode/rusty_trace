@@ -1,5 +1,4 @@
 use image::RgbImage;
-use poll_promise::Promise;
 
 use crate::hittable::HittableVec;
 use crate::material::Material;
@@ -115,14 +114,13 @@ impl GuiElement for ProjectEditor {
                 materials: self.materials.clone(),
                 textures: self.texture_editor.0.get_repo(),
             };
-            let preview = views::ImageView::new(
-                title,
-                Promise::spawn_thread("debug-renderer", move || {
+            let (tx, rx) = std::sync::mpsc::channel();
+            std::thread::spawn(move || {
                     let mut image = RgbImage::new(400, 400);
                     render(&mut image, &scene, 1, 10);
-                    image
-                }),
-            );
+                    tx.send(image)
+            });
+            let preview = views::ImageView::new(title, rx);
             self.previews.push((preview, true));
         }
     }

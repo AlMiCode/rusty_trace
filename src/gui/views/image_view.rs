@@ -1,20 +1,21 @@
+use std::sync::mpsc::Receiver;
+
 use super::{image_to_retained, View};
 use egui::Ui;
 use egui_extras::RetainedImage;
 use image::RgbImage;
-use poll_promise::Promise;
 
 pub struct ImageView {
     title: String,
-    promise: Promise<RgbImage>,
+    rx: Receiver<RgbImage>,
     image: Option<RetainedImage>,
 }
 
 impl ImageView {
-    pub fn new(title: impl Into<String>, promise: Promise<RgbImage>) -> Self {
+    pub fn new(title: impl Into<String>, rx: Receiver<RgbImage>) -> Self {
         Self {
             title: title.into(),
-            promise,
+            rx,
             image: None,
         }
     }
@@ -30,8 +31,9 @@ impl View for ImageView {
             img.show_max_size(ui, ui.available_size());
             Some(img.size())
         } else {
-            if let Some(img) = self.promise.ready() {
-                self.image = Some(image_to_retained(img));
+            match self.rx.try_recv() {
+                Ok(img) => self.image = Some(image_to_retained(&img)),
+                Err(_) => {},
             }
             ui.spinner();
             None
