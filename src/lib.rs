@@ -1,13 +1,13 @@
+use std::io::Write;
+
 use cgmath::{ElementWise, InnerSpace, Zero};
 use hittable::{Hittable, Sphere};
 use image::{DynamicImage, Rgb, Rgb32FImage, RgbImage};
 use material::{Material, MaterialTrait};
-use oidn::OpenImageDenoise;
+use oidn::OIND;
 use repo::VecRepo;
 use scene::Scene;
 use texture::Texture;
-
-use std::io::Write;
 
 pub mod camera;
 pub mod gui;
@@ -39,6 +39,8 @@ pub fn render(image: &mut RgbImage, scene: &Scene, sample_count: u32, depth: u32
     let camera = camera.build_with_dimensions(width, height);
     let background = textures.get(*background);
 
+    let mut working_image = Rgb32FImage::new(width, height);
+
     for y in 0..height {
         for x in 0..width {
             let mut colour = Colour::zero();
@@ -49,27 +51,18 @@ pub fn render(image: &mut RgbImage, scene: &Scene, sample_count: u32, depth: u32
 
                 colour += cast_ray(r, hittable, background, materials, textures, depth)
             }
-            let pixel: Rgb<u8> = vec_to_rgb(gamma_correction(colour / sample_count as f32));
-            image.put_pixel(x, height - y - 1, pixel);
+            let pixel = Rgb::<f32>(gamma_correction(colour / sample_count as f32).into());
+            working_image.put_pixel(x, height - y - 1, pixel);
         }
         print!("\r{}/{} done", y + 1, height);
         std::io::stdout().flush().expect("could not flush stdin");
     }
-    println!("\nElapsed: {:.2?}", now.elapsed());
-    *image = denoise(image.clone());
-}
-
-fn denoise(image: RgbImage) -> RgbImage {
-    let image = DynamicImage::ImageRgb8(image).into_rgb32f();
-    let mut output = image.as_raw().clone();
-
-    OpenImageDenoise::denoise(
-        image.as_raw(),
-        (image.width() as usize, image.height() as usize),
-        &mut output,
-    );
-    let output = Rgb32FImage::from_vec(image.width(), image.height(), output).unwrap();
-    DynamicImage::ImageRgb32F(output).into_rgb8()
+    println!("\nRendered: {:.2?}", now.elapsed());
+    if OIND.availible() {
+        working_image = OIND.denoise(working_image);
+        println!("Denoised: {:.2?}", now.elapsed());
+    }
+    *image = DynamicImage::ImageRgb32F(working_image).into_rgb8()
 }
 
 pub struct Ray {
@@ -122,10 +115,6 @@ pub fn cast_ray(
 
 fn gamma_correction(c: Colour) -> Colour {
     Colour::new(c.x.sqrt(), c.y.sqrt(), c.z.sqrt())
-}
-
-pub fn vec_to_rgb(vec: Colour) -> Rgb<u8> {
-    Rgb(vec.map(|n| (n.clamp(0.0, 1.0) * 255.0) as u8).into())
 }
 
 pub fn rgb_to_vec(rgb: &Rgb<u8>) -> Colour {
