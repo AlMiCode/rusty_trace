@@ -63,14 +63,6 @@ impl From<VecRepo<Texture>> for TextureEditor {
 }
 
 impl TextureEditor {
-    pub fn mock() -> Self {
-        let default_tex = Texture::default();
-        Self {
-            textures: vec![default_tex.clone(), default_tex.clone(), default_tex],
-            ..Default::default()
-        }
-    }
-
     pub fn get_repo(&self) -> VecRepo<Texture> {
         self.textures.clone().into()
     }
@@ -88,7 +80,7 @@ impl TextureEditor {
                     );
                 }
             });
-        self.texture_preview(ui, &self.textures[tex_id.id as usize]);
+        self.texture_preview(ui, &self.textures[tex_id.id as usize], false);
     }
 
     fn add_image(&mut self, image: io::Image) {
@@ -111,15 +103,19 @@ impl TextureEditor {
         }
     }
 
-    fn texture_preview(&self, ui: &mut Ui, tex: &Texture) {
+    fn texture_preview(&self, ui: &mut Ui, tex: &Texture, show_type: bool) {
         match tex {
             Texture::Colour(c) => {
-                ui.label("Colour");
+                if show_type {
+                    ui.label("Colour");
+                }
                 let colour: Color32 = egui::Rgba::from_rgb(c.x, c.y, c.z).into();
                 show_color(ui, colour, ui.available_size_before_wrap());
             }
             Texture::Image(img) => {
-                ui.label("Image");
+                if show_type {
+                    ui.label("Image");
+                }
                 ui.label("example.png")
                     .on_hover_ui(|ui| self.image_preview(ui, img, 250.0));
             }
@@ -180,7 +176,7 @@ impl View for TextureEditor {
         grid(ui, "Textures1", 4, true).show(ui, |ui| {
             while let Some((id, tex)) = tex_iter.peek() {
                 ui.label(format!("Texture {}", id));
-                self.texture_preview(ui, tex);
+                self.texture_preview(ui, tex, true);
                 if editor_state.edited_id == None {
                     if ui.button("Edit").clicked() {
                         editor_state.setup(*id, tex);
@@ -205,7 +201,7 @@ impl View for TextureEditor {
         grid(ui, "Textures2", 4, true).show(ui, |ui| {
             for (id, tex) in tex_iter {
                 ui.label(format!("Texture {}", id));
-                self.texture_preview(ui, tex);
+                self.texture_preview(ui, tex, true);
                 if editor_state.edited_id == None {
                     if ui.button("Edit").clicked() {
                         editor_state.setup(id, tex);

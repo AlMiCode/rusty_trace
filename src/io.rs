@@ -46,7 +46,6 @@ impl Hash for Image {
     }
 }
 
-/// I know this is out of `gui` module, but i only can implement it here. Seems like a good compromise.
 impl<'a> Into<&'a image::RgbImage> for &'a Image {
     fn into(self) -> &'a image::RgbImage {
         self.image()

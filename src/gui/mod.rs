@@ -9,12 +9,6 @@ mod views;
 
 use crate::scene::Scene;
 
-#[derive(Clone, Copy)]
-pub struct WindowDimensions {
-    pub width: u32,
-    pub height: u32,
-}
-
 pub struct Gui {
     elements: Vec<Box<dyn GuiElement>>,
 }
@@ -22,8 +16,6 @@ pub struct Gui {
 impl Default for Gui {
     fn default() -> Self {
         let scene = Scene::cornell_box();
-        //let scene_rc = Rc::new(RefCell::new(scene));
-        //let scene_editor = SceneEditor::new(String::from("Scene editor"), scene_rc);
         Self {
             elements: vec![Box::new(ProjectEditor::from_scene(scene))],
         }
@@ -42,9 +34,6 @@ impl Gui {
 
 impl eframe::App for Gui {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // egui::CentralPanel::default().show(ctx, |ui| {
-
-        // });
         for e in &mut self.elements {
             e.show(ctx);
         }
