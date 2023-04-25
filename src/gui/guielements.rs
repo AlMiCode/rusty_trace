@@ -1,7 +1,9 @@
+use egui::{Color32, Separator};
 use image::RgbImage;
 
 use crate::hittable::HittableVec;
 use crate::material::Material;
+use crate::oidn::OIND;
 use crate::render;
 use crate::repo::{Id, VecRepo};
 use crate::scene::Scene;
@@ -84,6 +86,15 @@ impl GuiElement for ProjectEditor {
                 ui.label("Background:");
                 self.texture_editor.0.texture_picker(ui, &mut self.background);
             });
+        });
+
+        egui::TopBottomPanel::bottom("bottom_panel").exact_height(18.0).show(ctx, |ui| {
+            ui.horizontal_top(|ui| {
+                let oidn_text = format!("OIDN: {}", if OIND.availible() { "ON" } else { "OFF" });
+                ui.colored_label(if OIND.availible() { Color32::GREEN } else { Color32::RED }, oidn_text);
+                ui.add(Separator::default().vertical());
+                ui.label("Logging is important. Log messages will be diplayed here");
+            })
         });
 
 
