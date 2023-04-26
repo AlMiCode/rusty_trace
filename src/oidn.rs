@@ -58,18 +58,42 @@ impl OpenImageDenoiseAPI {
         self.lib.is_some()
     }
 
-    pub fn denoise(&self, image: image::Rgb32FImage) -> image::Rgb32FImage {
+    pub fn denoise(&self, image: &mut image::Rgb32FImage) {
         let dims = image.dimensions();
-        let mut vec = image.into_raw();
-        let _result =
-            unsafe { self.denoise_internal((dims.0 as usize, dims.1 as usize), &mut vec) };
-        image::Rgb32FImage::from_vec(dims.0, dims.1, vec).unwrap()
+        let _result = unsafe {
+            self.denoise_internal(
+                (dims.0 as usize, dims.1 as usize),
+                image.as_mut(),
+                None,
+                None,
+            )
+        };
+    }
+
+    pub fn denoise_extended(
+        &self,
+        image: &mut image::Rgb32FImage,
+        albedo: &image::Rgb32FImage,
+        normal: &image::Rgb32FImage,
+    ) {
+        let dims = image.dimensions();
+
+        let _result = unsafe {
+            self.denoise_internal(
+                (dims.0 as usize, dims.1 as usize),
+                image.as_mut(),
+                Some(albedo.as_raw()),
+                Some(normal.as_raw()),
+            )
+        };
     }
 
     unsafe fn denoise_internal(
         &self,
         dimensions: (usize, usize),
         image: &mut [f32],
+        albedo: Option<&[f32]>,
+        normal: Option<&[f32]>,
     ) -> anyhow::Result<()> {
         if self.lib.is_none() {
             return Err(anyhow!("Library is not loaded"));
@@ -97,6 +121,36 @@ impl OpenImageDenoiseAPI {
         oidn_retain_device(device);
 
         let filter = oidn_new_filter(device, b"RT\0" as *const _ as _);
+
+        if let Some(alb) = albedo {
+            oidn_set_shared_filter_image(
+                filter,
+                b"albedo\0" as *const _ as _,
+                alb.as_ptr() as *mut _,
+                OIDNFORMAT_OIDN_FORMAT_FLOAT3,
+                dimensions.0 as _,
+                dimensions.1 as _,
+                0,
+                0,
+                0,
+            );
+
+            // No use supplying normal if albedo was
+            // not also given.
+            if let Some(norm) = normal {
+                oidn_set_shared_filter_image(
+                    filter,
+                    b"normal\0" as *const _ as _,
+                    norm.as_ptr() as *mut _,
+                    OIDNFORMAT_OIDN_FORMAT_FLOAT3,
+                    dimensions.0 as _,
+                    dimensions.1 as _,
+                    0,
+                    0,
+                    0,
+                );
+            }
+        }
 
         let input_ptr = image.as_ptr();
         oidn_set_shared_filter_image(
@@ -126,7 +180,7 @@ impl OpenImageDenoiseAPI {
         oidn_set_filter1b(filter, b"hdr\0" as *const _ as _, false);
         oidn_set_filter1f(filter, b"inputScale\0" as *const _ as _, f32::NAN);
         oidn_set_filter1b(filter, b"srgb\0" as *const _ as _, true);
-        oidn_set_filter1b(filter, b"clean_aux\0" as *const _ as _, false);
+        oidn_set_filter1b(filter, b"clean_aux\0" as *const _ as _, true);
 
         oidn_commit_filter(filter);
         oidn_execute_filter(filter);

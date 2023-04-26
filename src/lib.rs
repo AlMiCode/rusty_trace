@@ -39,30 +39,34 @@ pub fn render(image: &mut RgbImage, scene: &Scene, sample_count: u32, depth: u32
     let camera = camera.build_with_dimensions(width, height);
     let background = textures.get(*background);
 
-    let mut working_image = Rgb32FImage::new(width, height);
+    let mut colour_image = Rgb32FImage::new(width, height);
+    let mut albedo_image = Rgb32FImage::new(width, height);
+    let mut normal_image = Rgb32FImage::new(width, height);
 
     for y in 0..height {
         for x in 0..width {
-            let mut colour = Colour::zero();
-            for _s in 0..sample_count {
-                let u = x as f64 / (width - 1) as f64;
-                let v = y as f64 / (height - 1) as f64;
+            let u = x as f64 / (width - 1) as f64;
+            let v = y as f64 / (height - 1) as f64;
+            let r = camera.get_ray(u, v);
+            let (mut colour, albedo, normal) = cast_ray_extended(r, hittable, background, materials, textures, depth);
+            for _s in 1..sample_count {
                 let r = camera.get_ray(u, v);
-
                 colour += cast_ray(r, hittable, background, materials, textures, depth)
             }
             let pixel = Rgb::<f32>(gamma_correction(colour / sample_count as f32).into());
-            working_image.put_pixel(x, height - y - 1, pixel);
+            colour_image.put_pixel(x, height - y - 1, pixel);
+            albedo_image.put_pixel(x, height - y - 1, Rgb(albedo.into()));
+            normal_image.put_pixel(x, height - y - 1, Rgb(normal.into()));
         }
         print!("\r{}/{} done", y + 1, height);
         std::io::stdout().flush().expect("could not flush stdin");
     }
     println!("\nRendered: {:.2?}", now.elapsed());
     if OIND.availible() {
-        working_image = OIND.denoise(working_image);
+        OIND.denoise_extended(&mut colour_image, &albedo_image, &normal_image);
         println!("Denoised: {:.2?}", now.elapsed());
     }
-    *image = DynamicImage::ImageRgb32F(working_image).into_rgb8()
+    *image = DynamicImage::ImageRgb32F(colour_image).into_rgb8()
 }
 
 pub struct Ray {
@@ -111,6 +115,43 @@ pub fn cast_ray(
         let (u, v) = Sphere::get_uv(&ray.direction);
         background.colour_at(u, v)
     }
+}
+
+fn cast_ray_extended(
+    ray: Ray,    
+    hittable: &dyn Hittable,
+    background: &Texture,
+    materials: &VecRepo<Material>,
+    textures: &VecRepo<Texture>,
+    depth: u32,
+) -> (Colour, Colour, cgmath::Vector3<f32>) {
+    if depth == 0 {
+        return (Colour::zero(), Colour::zero(), cgmath::Vector3::zero());
+    }
+    if let Some(hit) = hittable.hit_bounded(&ray, 0.0001, f64::INFINITY) {
+        let emitted = materials
+            .get(hit.material_id)
+            .emit(hit.uv.0, hit.uv.1, textures);
+        match materials.get(hit.material_id).scatter(&ray, &hit, textures) {
+            None => (emitted, emitted, hit.normal.cast::<f32>().unwrap()),
+            Some(scattered) => {
+                let next_scattered = cast_ray(
+                    scattered.ray,
+                    hittable,
+                    background,
+                    materials,
+                    textures,
+                    depth - 1,
+                );
+                (scattered.attenuation.mul_element_wise(next_scattered) + emitted, scattered.attenuation, hit.normal.cast::<f32>().unwrap())
+            }
+        }
+    } else {
+        let (u, v) = Sphere::get_uv(&ray.direction);
+        let c = background.colour_at(u, v);
+        (c, c, (-ray.direction).cast::<f32>().unwrap().normalize())
+    }
+
 }
 
 fn gamma_correction(c: Colour) -> Colour {
