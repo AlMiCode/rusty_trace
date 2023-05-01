@@ -15,7 +15,11 @@ pub struct CamerasEditor {
 
 impl CamerasEditor {
     pub fn with_default(c: CameraSettings) -> Self {
-        Self { cameras: vec![], chosen_camera: None, default: c }
+        Self {
+            cameras: vec![],
+            chosen_camera: None,
+            default: c,
+        }
     }
 
     pub fn chosen_camera(&mut self) -> Option<CameraSettings> {
@@ -44,7 +48,7 @@ impl View for CamerasEditor {
         for (idx, c) in &mut self.cameras.iter_mut().enumerate() {
             egui::Grid::new(ui.auto_id_with("camera_settings")).show(ui, |ui| {
                 ui.label(RichText::new(format!("Camera {}", idx)).strong());
-                ui.horizontal(|ui|{
+                ui.horizontal(|ui| {
                     if ui.button("Render").clicked() {
                         self.chosen_camera = Some(c.clone());
                     }

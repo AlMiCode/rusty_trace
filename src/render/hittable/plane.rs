@@ -1,8 +1,8 @@
 use cgmath::vec3;
 
-use crate::render::{repo::Id, material::Material, Point3, Ray};
+use crate::render::{material::Material, repo::Id, Point3, Ray};
 
-use super::{Hittable, HitRecord};
+use super::{HitRecord, Hittable};
 
 #[derive(Clone)]
 pub enum Plane {

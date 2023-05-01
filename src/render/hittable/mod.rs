@@ -1,12 +1,10 @@
 use cgmath::InnerSpace;
 
-use super::{Point3, Vector3, material::Material, repo::Id, Ray};
+use super::{material::Material, repo::Id, Point3, Ray, Vector3};
 
-
-
-pub(crate) mod sphere;
-pub(crate) mod plane;
 pub(crate) mod modifiers;
+pub(crate) mod plane;
+pub(crate) mod sphere;
 
 pub struct HitRecord {
     pub point: Point3,

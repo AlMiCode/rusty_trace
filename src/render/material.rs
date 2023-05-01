@@ -1,9 +1,13 @@
 use cgmath::{InnerSpace, Zero};
 use enum_dispatch::enum_dispatch;
 
-use super::{Vector3, Ray, Colour, repo::{Id, VecRepo}, hittable::HitRecord, texture::Texture, random_vec_in_sphere, random_f64};
-
-
+use super::{
+    hittable::HitRecord,
+    random_f64, random_vec_in_sphere,
+    repo::{Id, VecRepo},
+    texture::Texture,
+    Colour, Ray, Vector3,
+};
 
 fn reflect(vec: &Vector3, normal: &Vector3) -> Vector3 {
     vec - normal * 2.0 * vec.dot(normal.clone())

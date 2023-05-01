@@ -1,6 +1,16 @@
 use cgmath::point3;
 
-use super::{hittable::{HittableVec, plane::{Rect, Plane}}, camera::CameraSettings, texture::Texture, repo::{Id, VecRepo}, material::{Material, Lambertian, DiffuseLight}, Colour};
+use super::{
+    camera::CameraSettings,
+    hittable::{
+        plane::{Plane, Rect},
+        HittableVec,
+    },
+    material::{DiffuseLight, Lambertian, Material},
+    repo::{Id, VecRepo},
+    texture::Texture,
+    Colour,
+};
 
 #[derive(Clone)]
 pub struct Scene {

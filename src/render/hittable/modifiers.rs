@@ -1,8 +1,8 @@
 use cgmath::EuclideanSpace;
 
-use crate::render::{Vector3, Ray, Point3};
+use crate::render::{Point3, Ray, Vector3};
 
-use super::{Hittable, HitRecord};
+use super::{HitRecord, Hittable};
 
 #[derive(Clone)]
 struct Translate {

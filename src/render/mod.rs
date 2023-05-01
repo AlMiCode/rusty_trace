@@ -3,7 +3,7 @@ use std::io::Write;
 use crate::oidn::OIND;
 use cgmath::{ElementWise, InnerSpace, Zero};
 use hittable::{sphere::Sphere, Hittable};
-use image::{Rgb32FImage, Rgb};
+use image::{Rgb, Rgb32FImage};
 use material::{Material, MaterialTrait};
 use repo::VecRepo;
 use scene::Scene;
