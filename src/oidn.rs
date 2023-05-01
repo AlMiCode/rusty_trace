@@ -139,7 +139,7 @@ impl OpenImageDenoiseAPI {
         oidn_set_filter1b(filter, b"hdr\0" as *const _ as _, false);
         oidn_set_filter1f(filter, b"inputScale\0" as *const _ as _, f32::NAN);
         oidn_set_filter1b(filter, b"srgb\0" as *const _ as _, true);
-        oidn_set_filter1b(filter, b"clean_aux\0" as *const _ as _, true);
+        oidn_set_filter1b(filter, b"clean_aux\0" as *const _ as _, false);
 
         oidn_commit_filter(filter);
         oidn_execute_filter(filter);

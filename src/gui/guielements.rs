@@ -143,7 +143,7 @@ impl GuiElement for ProjectEditor {
                 textures: self.texture_editor.0.get_repo(),
             };
             let (tx, rx) = std::sync::mpsc::channel();
-            std::thread::spawn(move || tx.send(render((400, 400), &scene, 3, 10)));
+            std::thread::spawn(move || tx.send(render((400, 400), &scene, 30, 10)));
             let preview = views::RenderedImageView::new(title, rx);
             self.previews.push((preview, true));
         }
