@@ -1,38 +1,9 @@
 use std::path::PathBuf;
 
 use anyhow::anyhow;
+use lazy_static::lazy_static;
 
-const OIDNDEVICE_TYPE_OIDN_DEVICE_TYPE_DEFAULT: OIDNDeviceType = 0;
-type OIDNDeviceType = ::std::os::raw::c_uint;
-
-#[repr(C)]
-#[derive(Debug, Copy)]
-struct OIDNDeviceImpl {
-    _unused: [u8; 0],
-}
-impl Clone for OIDNDeviceImpl {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-type OIDNDevice = *mut OIDNDeviceImpl;
-
-#[repr(C)]
-#[derive(Debug, Copy)]
-struct OIDNFilterImpl {
-    _unused: [u8; 0],
-}
-impl Clone for OIDNFilterImpl {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-type OIDNFilter = *mut OIDNFilterImpl;
-
-const OIDNFORMAT_OIDN_FORMAT_FLOAT3: OIDNFormat = 3;
-type OIDNFormat = ::std::os::raw::c_uint;
-
-lazy_static::lazy_static! {
+lazy_static! {
     pub static ref OIND: OpenImageDenoiseAPI = OpenImageDenoiseAPI::new();
 }
 
@@ -58,19 +29,7 @@ impl OpenImageDenoiseAPI {
         self.lib.is_some()
     }
 
-    pub fn denoise(&self, image: &mut image::Rgb32FImage) {
-        let dims = image.dimensions();
-        let _result = unsafe {
-            self.denoise_internal(
-                (dims.0 as usize, dims.1 as usize),
-                image.as_mut(),
-                None,
-                None,
-            )
-        };
-    }
-
-    pub fn denoise_extended(
+    pub fn denoise(
         &self,
         image: &mut image::Rgb32FImage,
         albedo: &image::Rgb32FImage,
@@ -190,6 +149,36 @@ impl OpenImageDenoiseAPI {
         Ok(())
     }
 }
+
+const OIDNDEVICE_TYPE_OIDN_DEVICE_TYPE_DEFAULT: OIDNDeviceType = 0;
+type OIDNDeviceType = ::std::os::raw::c_uint;
+
+#[repr(C)]
+#[derive(Debug, Copy)]
+struct OIDNDeviceImpl {
+    _unused: [u8; 0],
+}
+impl Clone for OIDNDeviceImpl {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+type OIDNDevice = *mut OIDNDeviceImpl;
+
+#[repr(C)]
+#[derive(Debug, Copy)]
+struct OIDNFilterImpl {
+    _unused: [u8; 0],
+}
+impl Clone for OIDNFilterImpl {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+type OIDNFilter = *mut OIDNFilterImpl;
+
+const OIDNFORMAT_OIDN_FORMAT_FLOAT3: OIDNFormat = 3;
+type OIDNFormat = ::std::os::raw::c_uint;
 
 type OIDNNewDeviceFn = unsafe extern "C" fn(type_: OIDNDeviceType) -> OIDNDevice;
 type OIDNManageDeviceFn = unsafe extern "C" fn(device: OIDNDevice);

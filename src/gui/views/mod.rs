@@ -6,7 +6,7 @@ use image::RgbImage;
 pub use texture_editor::TextureEditor;
 
 mod image_view;
-pub use image_view::ImageView;
+pub use image_view::RenderedImageView;
 
 mod cameras_editor;
 pub use cameras_editor::CamerasEditor;

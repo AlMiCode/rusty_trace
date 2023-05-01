@@ -1,10 +1,10 @@
 use std::io::Write;
 
-use cgmath::{ElementWise, InnerSpace, Zero};
-use hittable::{Hittable, sphere::Sphere};
-use image::{DynamicImage, Rgb, Rgb32FImage, RgbImage};
-use material::{Material, MaterialTrait};
 use crate::oidn::OIND;
+use cgmath::{ElementWise, InnerSpace, Zero};
+use hittable::{sphere::Sphere, Hittable};
+use image::{Rgb32FImage, Rgb};
+use material::{Material, MaterialTrait};
 use repo::VecRepo;
 use scene::Scene;
 use texture::Texture;
@@ -20,7 +20,14 @@ pub type Point3 = cgmath::Point3<f64>;
 pub type Vector3 = cgmath::Vector3<f64>;
 pub type Colour = cgmath::Vector3<f32>;
 
-pub fn render(image: &mut RgbImage, scene: &Scene, sample_count: u32, depth: u32) {
+pub struct RenderedImage {
+    pub colour: Rgb32FImage,
+    pub albedo: Rgb32FImage,
+    pub normal: Rgb32FImage,
+    pub denoised: Rgb32FImage,
+}
+
+pub fn render(dims: (u32, u32), scene: &Scene, sample_count: u32, depth: u32) -> RenderedImage {
     use std::time::Instant;
     let now = Instant::now();
 
@@ -32,7 +39,7 @@ pub fn render(image: &mut RgbImage, scene: &Scene, sample_count: u32, depth: u32
         textures,
     } = scene;
 
-    let (width, height) = image.dimensions();
+    let (width, height) = dims;
     let camera = camera.build_with_dimensions(width, height);
     let background = textures.get(*background);
 
@@ -45,7 +52,8 @@ pub fn render(image: &mut RgbImage, scene: &Scene, sample_count: u32, depth: u32
             let u = x as f64 / (width - 1) as f64;
             let v = y as f64 / (height - 1) as f64;
             let r = camera.get_ray(u, v);
-            let (mut colour, albedo, normal) = cast_ray_extended(r, hittable, background, materials, textures, depth);
+            let (mut colour, albedo, normal) =
+                cast_ray_extended(r, hittable, background, materials, textures, depth);
             for _s in 1..sample_count {
                 let r = camera.get_ray(u, v);
                 colour += cast_ray(r, hittable, background, materials, textures, depth)
@@ -59,11 +67,18 @@ pub fn render(image: &mut RgbImage, scene: &Scene, sample_count: u32, depth: u32
         std::io::stdout().flush().expect("could not flush stdin");
     }
     println!("\nRendered: {:.2?}", now.elapsed());
+
+    let mut denoised_image = colour_image.clone();
     if OIND.availible() {
-        OIND.denoise_extended(&mut colour_image, &albedo_image, &normal_image);
+        OIND.denoise(&mut denoised_image, &albedo_image, &normal_image);
         println!("Denoised: {:.2?}", now.elapsed());
     }
-    *image = DynamicImage::ImageRgb32F(colour_image).into_rgb8()
+    RenderedImage {
+        colour: colour_image,
+        albedo: albedo_image,
+        normal: normal_image,
+        denoised: denoised_image,
+    }
 }
 
 pub struct Ray {
@@ -115,7 +130,7 @@ pub fn cast_ray(
 }
 
 fn cast_ray_extended(
-    ray: Ray,    
+    ray: Ray,
     hittable: &dyn Hittable,
     background: &Texture,
     materials: &VecRepo<Material>,
@@ -140,7 +155,11 @@ fn cast_ray_extended(
                     textures,
                     depth - 1,
                 );
-                (scattered.attenuation.mul_element_wise(next_scattered) + emitted, scattered.attenuation, hit.normal.cast::<f32>().unwrap())
+                (
+                    scattered.attenuation.mul_element_wise(next_scattered) + emitted,
+                    scattered.attenuation,
+                    hit.normal.cast::<f32>().unwrap(),
+                )
             }
         }
     } else {
@@ -148,14 +167,13 @@ fn cast_ray_extended(
         let c = background.colour_at(u, v);
         (c, c, (-ray.direction).cast::<f32>().unwrap().normalize())
     }
-
 }
 
 fn gamma_correction(c: Colour) -> Colour {
     Colour::new(c.x.sqrt(), c.y.sqrt(), c.z.sqrt())
 }
 
-pub fn rgb_to_vec(rgb: &Rgb<u8>) -> Colour {
+fn rgb_to_vec(rgb: &Rgb<u8>) -> Colour {
     Colour::from(rgb.0.map(|n| n as f32 / 255.0))
 }
 

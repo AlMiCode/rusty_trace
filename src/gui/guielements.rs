@@ -1,10 +1,9 @@
 use egui::{Color32, Separator};
-use image::RgbImage;
 
 use crate::render::hittable::HittableVec;
 use crate::render::material::Material;
 use crate::oidn::OIND;
-use crate::render;
+use crate::render::render;
 use crate::render::repo::{Id, VecRepo};
 use crate::render::scene::Scene;
 use crate::render::texture::Texture;
@@ -51,7 +50,7 @@ pub struct ProjectEditor {
     //===========================
     cameras_editor: (views::CamerasEditor, bool),
     texture_editor: (views::TextureEditor, bool),
-    previews: Vec<(views::ImageView, bool)>,
+    previews: Vec<(views::RenderedImageView, bool)>,
 }
 
 impl ProjectEditor {
@@ -126,12 +125,8 @@ impl GuiElement for ProjectEditor {
                 textures: self.texture_editor.0.get_repo(),
             };
             let (tx, rx) = std::sync::mpsc::channel();
-            std::thread::spawn(move || {
-                    let mut image = RgbImage::new(400, 400);
-                    render::render(&mut image, &scene, 3, 10);
-                    tx.send(image)
-            });
-            let preview = views::ImageView::new(title, rx);
+            std::thread::spawn(move || tx.send(render((400, 400), &scene, 3, 10)));
+            let preview = views::RenderedImageView::new(title, rx);
             self.previews.push((preview, true));
         }
     }
