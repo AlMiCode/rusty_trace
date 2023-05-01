@@ -1,13 +1,13 @@
 use egui::{Color32, Separator};
 use image::RgbImage;
 
-use crate::hittable::HittableVec;
-use crate::material::Material;
+use crate::render::hittable::HittableVec;
+use crate::render::material::Material;
 use crate::oidn::OIND;
 use crate::render;
-use crate::repo::{Id, VecRepo};
-use crate::scene::Scene;
-use crate::texture::Texture;
+use crate::render::repo::{Id, VecRepo};
+use crate::render::scene::Scene;
+use crate::render::texture::Texture;
 
 use super::views;
 
@@ -38,7 +38,7 @@ fn show_view_as_side_panel(
         .show_animated(ctx, open, |ui| {
             ui.heading(view.title());
             ui.separator();
-            view.ui(ui)
+            egui::ScrollArea::vertical().show(ui, |ui| view.ui(ui))
         });
 }
 
@@ -128,7 +128,7 @@ impl GuiElement for ProjectEditor {
             let (tx, rx) = std::sync::mpsc::channel();
             std::thread::spawn(move || {
                     let mut image = RgbImage::new(400, 400);
-                    render(&mut image, &scene, 1, 10);
+                    render::render(&mut image, &scene, 3, 10);
                     tx.send(image)
             });
             let preview = views::ImageView::new(title, rx);

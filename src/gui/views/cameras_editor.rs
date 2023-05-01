@@ -2,7 +2,7 @@ use std::mem::take;
 
 use egui::RichText;
 
-use crate::camera::CameraSettings;
+use crate::render::camera::CameraSettings;
 
 use super::{point3_editor, View};
 

@@ -1,10 +1,9 @@
 use cgmath::{InnerSpace, Zero};
 use enum_dispatch::enum_dispatch;
 
-use crate::hittable::HitRecord;
-use crate::repo::{Id, VecRepo};
-use crate::texture::Texture;
-use crate::{random_f64, random_vec_in_sphere, Colour, Ray, Vector3};
+use super::{Vector3, Ray, Colour, repo::{Id, VecRepo}, hittable::HitRecord, texture::Texture, random_vec_in_sphere, random_f64};
+
+
 
 fn reflect(vec: &Vector3, normal: &Vector3) -> Vector3 {
     vec - normal * 2.0 * vec.dot(normal.clone())

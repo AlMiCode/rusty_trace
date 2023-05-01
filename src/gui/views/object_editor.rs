@@ -1,6 +1,6 @@
 use egui::Ui;
 
-use crate::hittable::Sphere;
+use crate::render::hittable::sphere::Sphere;
 
 use super::point3_editor;
 

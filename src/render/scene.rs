@@ -1,13 +1,6 @@
 use cgmath::point3;
 
-use crate::{
-    camera::CameraSettings,
-    hittable::{HittableVec, Plane, Rect},
-    material::{DiffuseLight, Lambertian, Material},
-    repo::{Id, VecRepo},
-    texture::Texture,
-    Colour,
-};
+use super::{hittable::{HittableVec, plane::{Rect, Plane}}, camera::CameraSettings, texture::Texture, repo::{Id, VecRepo}, material::{Material, Lambertian, DiffuseLight}, Colour};
 
 #[derive(Clone)]
 pub struct Scene {

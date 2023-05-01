@@ -3,7 +3,7 @@ use std::{collections::HashMap, mem::take, vec};
 use egui::{color_picker::show_color, Color32, ColorImage, Ui};
 use egui_extras::RetainedImage;
 
-use crate::{
+use crate::render::{
     repo::{Id, VecRepo},
     texture::Texture,
 };

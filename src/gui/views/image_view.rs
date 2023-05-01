@@ -33,7 +33,7 @@ impl View for ImageView {
         } else {
             match self.rx.try_recv() {
                 Ok(img) => self.image = Some(image_to_retained(&img)),
-                Err(_) => {},
+                Err(_) => {}
             }
             ui.spinner();
             None

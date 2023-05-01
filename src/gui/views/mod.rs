@@ -11,7 +11,7 @@ pub use image_view::ImageView;
 mod cameras_editor;
 pub use cameras_editor::CamerasEditor;
 
-use crate::Point3;
+use crate::render::Point3;
 
 mod object_editor;
 

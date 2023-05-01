@@ -7,7 +7,7 @@ use guielements::*;
 
 mod views;
 
-use crate::scene::Scene;
+use crate::render::scene::Scene;
 
 pub struct Gui {
     elements: Vec<Box<dyn GuiElement>>,

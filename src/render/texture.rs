@@ -1,4 +1,9 @@
-use crate::{io, rgb_to_vec, Colour};
+use crate::io;
+
+use super::{Colour, rgb_to_vec};
+
+
+
 
 #[derive(Clone)]
 pub enum Texture {
