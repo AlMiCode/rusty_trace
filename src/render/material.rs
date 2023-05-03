@@ -144,7 +144,7 @@ impl MaterialTrait for Dielectric {
 
         let cannot_refract = sin_theta * cos_theta > 1.0;
         let scattered = if cannot_refract
-            || Dielectric::reflectance(cos_theta, refraction_ratio) > random_f64()
+            || Dielectric::reflectance(cos_theta, refraction_ratio) > fastrand::f64()
         {
             reflect(&ray.direction, &hit.normal)
         } else {

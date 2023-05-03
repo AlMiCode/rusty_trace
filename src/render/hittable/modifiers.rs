@@ -40,3 +40,62 @@ impl Hittable for Translate {
         "Translate"
     }
 }
+
+#[derive(Clone)]
+pub struct RotateY {
+    sin_y: f64,
+    cos_y: f64,
+    object: Box<dyn Hittable>
+}
+
+impl RotateY {
+    pub fn new(object: Box<dyn Hittable>, degrees: f64) -> Self {
+        let angle = degrees.to_radians();
+        Self {
+            sin_y: angle.sin(),
+            cos_y: angle.cos(),
+            object
+        }
+    }
+}
+
+impl Hittable for RotateY {
+    fn hit_bounded(&self, ray: &Ray, min_dist: f64, max_dist: f64) -> Option<HitRecord> {
+        let Ray { mut origin, mut direction } = ray;
+        
+        origin[0] = self.cos_y * ray.origin[0] - self.sin_y * ray.origin[2];
+        origin[2] = self.sin_y * ray.origin[0] + self.cos_y * ray.origin[2];
+        
+        direction[0] = self.cos_y * ray.direction[0] - self.sin_y * ray.direction[2];
+        direction[2] = self.sin_y * ray.direction[0] + self.cos_y * ray.direction[2];
+
+        let rotated_ray = Ray::new(origin, direction);
+        let hit = self.object.hit_bounded(&rotated_ray, min_dist, max_dist);
+        if hit.is_none() { return None };
+        let mut hit = hit.unwrap();
+        
+        let mut point = hit.point;
+        let mut normal = hit.normal;
+        point[0] =  self.cos_y * hit.point[0] + self.sin_y * hit.point[2];
+        point[2] = -self.sin_y * hit.point[0] + self.cos_y * hit.point[2];
+    
+        normal[0] =  self.cos_y * hit.normal[0] + self.sin_y * hit.normal[2];
+        normal[2] = -self.sin_y * hit.normal[0] + self.cos_y * hit.normal[2];
+
+        hit.point = point;
+        hit.set_face_normal(&rotated_ray, normal);
+        Some(hit)
+    }
+
+    fn get_position(&self) -> Point3 {
+        unimplemented!()
+    }
+
+    fn set_position(&mut self, c: Point3) {
+        unimplemented!()
+    }
+
+    fn name(&self) -> &'static str {
+        "RotateY"
+    }
+}

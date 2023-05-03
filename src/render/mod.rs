@@ -88,7 +88,7 @@ pub struct Ray {
 
 impl Ray {
     pub fn new(origin: Point3, direction: Vector3) -> Self {
-        Ray { origin, direction }
+        Ray { origin, direction: direction.normalize() }
     }
     pub fn at(&self, t: f64) -> Point3 {
         self.origin + self.direction * t

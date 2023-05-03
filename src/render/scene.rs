@@ -45,6 +45,7 @@ impl Scene {
         let white_tex = textures.insert(Colour::new(0.73, 0.73, 0.73));
         let green_tex = textures.insert(Colour::new(0.12, 0.45, 0.15));
         let light_tex = textures.insert(Colour::new(1.0, 1.0, 1.0));
+        let black_tex = textures.insert(Colour::new(0., 0., 0.));
 
         let mut materials = VecRepo::<Material>::default();
 
@@ -56,7 +57,7 @@ impl Scene {
             amplify: 15.0,
         });
 
-        let glass_mat = materials.insert(Dielectric { refractive_index: 1.33 });
+        let glass_mat = materials.insert(Dielectric { refractive_index: 1.5 });
 
         let green_wall = Rect::new(&point3(555.0, 0.0, 0.0), 555.0, 555.0, Plane::YZ, green_mat);
         let red_wall = Rect::new(&point3(0.0, 0.0, 0.0), 555.0, 555.0, Plane::YZ, red_mat);
@@ -71,7 +72,7 @@ impl Scene {
             light_mat,
         );
 
-        let ball = Sphere::new(point3(277.5, 110.0, 277.5), 110.0, glass_mat);
+        let ball = Sphere::new(point3(150.0, 110.0, 150.0), 110.0, glass_mat);
 
         let camera_set = CameraSettings {
             look_from: point3(278.0, 278.0, -800.0),
@@ -91,7 +92,7 @@ impl Scene {
                 Box::new(ball)
             ],
             camera: camera_set,
-            background: white_tex,
+            background: black_tex,
             materials,
             textures: textures.into(),
         }
