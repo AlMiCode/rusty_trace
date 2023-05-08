@@ -11,6 +11,10 @@ pub struct OpenImageDenoiseAPI {
     lib: Option<libloading::Library>,
 }
 
+fn get_slice(img: &image::Rgb32FImage) -> &[f32] {
+    img.as_raw().as_slice()
+}
+
 impl OpenImageDenoiseAPI {
     fn new() -> Self {
         let lib_dir = std::env::var("OIDN_DIR");
@@ -32,8 +36,8 @@ impl OpenImageDenoiseAPI {
     pub fn denoise(
         &self,
         image: &mut image::Rgb32FImage,
-        albedo: &image::Rgb32FImage,
-        normal: &image::Rgb32FImage,
+        albedo: Option<&image::Rgb32FImage>,
+        normal: Option<&image::Rgb32FImage>,
     ) {
         let dims = image.dimensions();
 
@@ -41,8 +45,8 @@ impl OpenImageDenoiseAPI {
             self.denoise_internal(
                 (dims.0 as usize, dims.1 as usize),
                 image.as_mut(),
-                Some(albedo.as_raw()),
-                Some(normal.as_raw()),
+                albedo.map(get_slice),
+                normal.map(get_slice),
             )
         };
     }

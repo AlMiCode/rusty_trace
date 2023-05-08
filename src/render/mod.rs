@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::{io::Write};
 
 use crate::oidn::OIND;
 use cgmath::{ElementWise, InnerSpace, Zero};
@@ -70,7 +70,7 @@ pub fn render(dims: (u32, u32), scene: &Scene, sample_count: u32, depth: u32) ->
 
     let mut denoised_image = colour_image.clone();
     if OIND.availible() {
-        OIND.denoise(&mut denoised_image, &albedo_image, &normal_image);
+        OIND.denoise(&mut denoised_image, Some(&albedo_image), Some(&normal_image));
         println!("Denoised: {:.2?}", now.elapsed());
     }
     RenderedImage {
@@ -177,12 +177,12 @@ fn rgb_to_vec(rgb: &Rgb<u8>) -> Colour {
     Colour::from(rgb.0.map(|n| n as f32 / 255.0))
 }
 
-fn random_f64() -> f64 {
-    fastrand::f64() * 2.0 - 1.0
+fn random_f64(min: f64, max: f64) -> f64 {
+    min + (max - min) * fastrand::f64()
 }
 
 fn random_vec() -> Vector3 {
-    Vector3::new(random_f64(), random_f64(), random_f64())
+    Vector3::new(random_f64(-1.0, 1.0), random_f64(-1.0, 1.0), random_f64(-1.0, 1.0))
 }
 
 fn random_vec_in_sphere() -> Vector3 {
