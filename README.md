@@ -4,12 +4,12 @@
 ## To Do
 
 - [X] Texture Editor
-- [] Material Editor
-- [] Object Editor
-- [] Saving and loading `Scene` to/from file
-- [] Support `.obj` models
-- [] Add modifiers (rotations, combinations, etc) to Hittables
-- [] Document exising code
+- [ ] Material Editor
+- [ ] Object Editor
+- [ ] Saving and loading `Scene` to/from file
+- [ ] Support `.obj` models
+- [ ] Add modifiers (rotations, combinations, etc) to Hittables
+- [ ] Document exising code
 
 ## Project structure
 Here only top structure is shown. We try to organise our code in self-explanatory way, so that it wouldn't need additional comments.
