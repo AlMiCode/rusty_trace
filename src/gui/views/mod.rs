@@ -31,8 +31,7 @@ fn point3_editor(ui: &mut Ui, p: &mut Point3) -> Response {
 }
 
 // helper function for internal use only
-fn image_to_retained<'a>(image: impl Into<&'a RgbImage>) -> RetainedImage {
-    let image = image.into();
+fn image_to_retained(image: &RgbImage) -> RetainedImage {
     RetainedImage::from_color_image(
         "opened file",
         ColorImage::from_rgb(

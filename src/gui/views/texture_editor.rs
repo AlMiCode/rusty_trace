@@ -5,7 +5,7 @@ use egui_extras::RetainedImage;
 
 use crate::render::{
     repo::{Id, VecRepo},
-    texture::Texture,
+    texture::{Texture, Image},
 };
 
 use super::{grid, image_to_retained, View};
@@ -16,7 +16,7 @@ struct TextureEditorState {
     edited_id: Option<usize>,
     choosing_image: bool,
     edited_rgb: [f32; 3],
-    edited_image: Option<io::Image>,
+    edited_image: Option<Image>,
 }
 
 impl TextureEditorState {
@@ -39,7 +39,7 @@ impl TextureEditorState {
 pub struct TextureEditor {
     editor_state: TextureEditorState,
     textures: Vec<Texture>,
-    retained_images: HashMap<io::Image, RetainedImage>,
+    retained_images: HashMap<Image, RetainedImage>,
 }
 
 impl Default for TextureEditor {
@@ -83,12 +83,12 @@ impl TextureEditor {
         self.texture_preview(ui, &self.textures[tex_id.id as usize], false);
     }
 
-    fn add_image(&mut self, image: io::Image) {
+    fn add_image(&mut self, image: Image) {
         self.retained_images
             .insert(image.clone(), image_to_retained(&image));
     }
 
-    fn image_preview(&self, ui: &mut Ui, img: &io::Image, max_size: f32) {
+    fn image_preview(&self, ui: &mut Ui, img: &Image, max_size: f32) {
         let fallback: RetainedImage =
             RetainedImage::from_color_image("Fallback", ColorImage::example());
 
@@ -135,8 +135,9 @@ impl TextureEditor {
             if ui.button("Open file...").clicked() {
                 state.edited_image = rfd::FileDialog::new()
                     .pick_file()
-                    .and_then(|path| io::Image::try_open(&path).ok())
+                    .and_then(|path| io::try_open(&path).ok())
                     .map(|image| {
+                        let image = Image::new(image);
                         self.add_image(image.clone());
                         image
                     });
