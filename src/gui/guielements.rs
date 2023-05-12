@@ -4,9 +4,9 @@ use crate::oidn::OIND;
 use crate::render::hittable::HittableVec;
 use crate::render::material::Material;
 use crate::render::render;
-use crate::render::repo::{Id, VecRepo};
 use crate::render::scene::Scene;
 use crate::render::texture::Texture;
+use crate::vec_repo::{Id, VecRepo};
 
 use super::views;
 
@@ -140,7 +140,7 @@ impl GuiElement for ProjectEditor {
                 camera,
                 background: self.background,
                 materials: self.materials.clone(),
-                textures: self.texture_editor.0.get_repo(),
+                textures: self.texture_editor.0.get_repo().clone(),
             };
             let (tx, rx) = std::sync::mpsc::channel();
             std::thread::spawn(move || tx.send(render((400, 400), &scene, 30, 10)));

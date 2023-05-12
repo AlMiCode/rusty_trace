@@ -1,10 +1,11 @@
 use cgmath::{InnerSpace, Zero};
 use enum_dispatch::enum_dispatch;
 
+use crate::vec_repo::{Id, VecRepo};
+
 use super::{
     hittable::HitRecord,
     random_f64, random_vec_in_sphere,
-    repo::{Id, VecRepo},
     texture::Texture,
     Colour, Ray, Vector3,
 };

@@ -3,10 +3,9 @@ use std::{collections::HashMap, mem::take, vec};
 use egui::{color_picker::show_color, Color32, ColorImage, Ui};
 use egui_extras::RetainedImage;
 
-use crate::render::{
-    repo::{Id, VecRepo},
+use crate::{render::{
     texture::{Texture, Image},
-};
+}, vec_repo::{VecRepo, Id}};
 
 use super::{grid, image_to_retained, View};
 use crate::io;
@@ -36,35 +35,27 @@ impl TextureEditorState {
     }
 }
 
+#[derive(Default)]
 pub struct TextureEditor {
     editor_state: TextureEditorState,
-    textures: Vec<Texture>,
+    textures: VecRepo<Texture>,
     retained_images: HashMap<Image, RetainedImage>,
 }
 
-impl Default for TextureEditor {
-    fn default() -> Self {
-        Self {
-            editor_state: TextureEditorState::default(),
-            textures: vec![Texture::default()],
-            retained_images: HashMap::new(),
-        }
-    }
-}
 
 impl From<VecRepo<Texture>> for TextureEditor {
     fn from(value: VecRepo<Texture>) -> Self {
         Self {
             editor_state: TextureEditorState::default(),
-            textures: value.into(),
+            textures: value,
             retained_images: HashMap::new(),
         }
     }
 }
 
 impl TextureEditor {
-    pub fn get_repo(&self) -> VecRepo<Texture> {
-        self.textures.clone().into()
+    pub fn get_repo(&self) -> &VecRepo<Texture> {
+        &self.textures
     }
 
     pub fn texture_picker(&self, ui: &mut Ui, tex_id: &mut Id<Texture>) {
@@ -75,12 +66,12 @@ impl TextureEditor {
                 for (option, _tex) in self.textures.iter().enumerate().skip(1) {
                     ui.selectable_value(
                         tex_id,
-                        (option as u32).into(),
+                        Id::new(option as u32),
                         format!("Texture {}", option),
                     );
                 }
             });
-        self.texture_preview(ui, &self.textures[tex_id.id as usize], false);
+        self.texture_preview(ui, self.textures.get(*tex_id), false);
     }
 
     fn add_image(&mut self, image: Image) {

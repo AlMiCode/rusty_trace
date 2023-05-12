@@ -1,5 +1,7 @@
 use cgmath::point3;
 
+use crate::vec_repo::{Id, VecRepo};
+
 use super::{
     camera::CameraSettings,
     hittable::{
@@ -7,7 +9,6 @@ use super::{
         HittableVec, sphere::Sphere,
     },
     material::{DiffuseLight, Lambertian, Material, Dielectric},
-    repo::{Id, VecRepo},
     texture::Texture,
     Colour,
 };

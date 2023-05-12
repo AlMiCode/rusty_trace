@@ -1,6 +1,6 @@
 use cgmath::vec3;
 
-use crate::render::{material::Material, repo::Id, Point3, Ray};
+use crate::{render::{material::Material, Point3, Ray}, vec_repo::Id};
 
 use super::{HitRecord, Hittable};
 

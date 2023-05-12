@@ -1,6 +1,8 @@
 use cgmath::InnerSpace;
 
-use super::{material::Material, repo::Id, Point3, Ray, Vector3};
+use crate::vec_repo::Id;
+
+use super::{material::Material, Point3, Ray, Vector3};
 
 pub(crate) mod modifiers;
 pub(crate) mod plane;

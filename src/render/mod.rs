@@ -1,18 +1,16 @@
 use std::{io::Write};
 
-use crate::oidn::OIND;
+use crate::{oidn::OIND, vec_repo::VecRepo};
 use cgmath::{ElementWise, InnerSpace, Zero};
 use hittable::{sphere::Sphere, Hittable};
 use image::{Rgb, Rgb32FImage};
 use material::{Material, MaterialTrait};
-use repo::VecRepo;
 use scene::Scene;
 use texture::Texture;
 
 pub mod camera;
 pub mod hittable;
 pub mod material;
-pub mod repo;
 pub mod scene;
 pub mod texture;
 

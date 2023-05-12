@@ -1,6 +1,6 @@
 use cgmath::InnerSpace;
 
-use crate::render::{material::Material, repo::Id, Point3, Ray, Vector3};
+use crate::{render::{material::Material, Point3, Ray, Vector3}, vec_repo::Id};
 
 use super::{HitRecord, Hittable};
 

@@ -2,7 +2,7 @@ use std::{sync::Arc, collections::hash_map::DefaultHasher, hash::{Hash, Hasher},
 
 use super::{rgb_to_vec, Colour};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum Texture {
     Colour(Colour),
     Image(Image),
