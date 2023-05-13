@@ -122,7 +122,6 @@ impl View for TextureEditor {
             textures,
         } = self;
         let mut tex_iter = textures.iter_mut().enumerate().peekable();
-
         grid(ui, "Textures1", 4, true).show(ui, |ui| {
             while let Some((id, tex)) = tex_iter.peek() {
                 ui.label(format!("Texture {}", id));

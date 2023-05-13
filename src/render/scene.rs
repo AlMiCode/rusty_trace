@@ -1,10 +1,10 @@
-use cgmath::point3;
+use cgmath::{point3, vec3};
 
 use crate::vec_repo::{Id, VecRepo};
 
 use super::{
     camera::CameraSettings,
-    hittable::{plane::Rect, sphere::Sphere, HittableVec},
+    hittable::{rect::Rect, sphere::Sphere, HittableVec, modifiers::{Translate, RotateY}},
     material::{Dielectric, DiffuseLight, Lambertian, Material},
     texture::Texture,
     Colour,
@@ -81,7 +81,15 @@ impl Scene {
             light_mat,
         );
 
-        let ball = Sphere::new(point3(150.0, 110.0, 150.0), 110.0, glass_mat);
+        let ball = Sphere::new(point3(400.0, 100.0, 80.0), 100.0, glass_mat);
+
+        let box1 = Rect::new(point000, point3(165.0, 330.0, 165.0), white_mat);
+        let box1 = RotateY::new(Box::new(box1), 15.0);
+        let box1 = Translate::new(Box::new(box1), vec3(265.0, 0.0, 295.0));
+
+        let box2 = Rect::new(point000, point3(165.0, 165.0, 165.0), white_mat);
+        let box2 = RotateY::new(Box::new(box2), -18.0);
+        let box2 = Translate::new(Box::new(box2), vec3(130.0, 0.0, 65.0));
 
         let camera_set = CameraSettings {
             look_from: point3(278.0, 278.0, -800.0),
@@ -99,6 +107,8 @@ impl Scene {
                 Box::new(back_wall),
                 Box::new(light_source),
                 Box::new(ball),
+                Box::new(box1),
+                Box::new(box2),
             ],
             camera: camera_set,
             background: black_tex,

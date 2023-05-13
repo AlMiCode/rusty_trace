@@ -150,7 +150,7 @@ impl GuiElement for ProjectEditor {
             let (tx, rx) = std::sync::mpsc::channel();
             std::thread::spawn(move || {
                 let now = Instant::now();
-                tx.send(render((400, 400), &scene, 3, 10))
+                tx.send(render((400, 400), &scene, 30, 30))
                     .expect("Successfully sent image");
                 LOGGER.log(format!("Rendering finished in {:.2?}", now.elapsed()));
             });

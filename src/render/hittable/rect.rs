@@ -1,3 +1,5 @@
+use std::mem::take;
+
 use cgmath::vec3;
 
 use crate::{
@@ -64,7 +66,59 @@ impl Hittable for Rect {
                 max_dist,
             );
         }
-        None
+        let side1 = hit_plane_xy(
+            ray,
+            [x0, x1, y0, y1, z0],
+            self.material_id,
+            min_dist,
+            max_dist,
+        );
+        let side2 = hit_plane_xy(
+            ray,
+            [x0, x1, y0, y1, z1],
+            self.material_id,
+            min_dist,
+            max_dist,
+        );
+        let side3 = hit_plane_xz(
+            ray,
+            [x0, x1, z0, z1, y0],
+            self.material_id,
+            min_dist,
+            max_dist,
+        );
+        let side4 = hit_plane_xz(
+            ray,
+            [x0, x1, z0, z1, y1],
+            self.material_id,
+            min_dist,
+            max_dist,
+        );
+        let side5 = hit_plane_yz(
+            ray,
+            [y0, y1, z0, z1, x0],
+            self.material_id,
+            min_dist,
+            max_dist,
+        );
+        let side6 = hit_plane_yz(
+            ray,
+            [y0, y1, z0, z1, x1],
+            self.material_id,
+            min_dist,
+            max_dist,
+        );
+        let mut sides = [side1, side2, side3, side4, side5, side6];
+        sides.sort_by(|lhs, rhs| {
+            if rhs.is_none() {
+                return std::cmp::Ordering::Less;
+            }
+            if lhs.is_none() {
+                return std::cmp::Ordering::Greater;
+            }
+            lhs.as_ref().unwrap().distance.total_cmp(&rhs.as_ref().unwrap().distance)
+        });
+        take(&mut sides[0])
     }
 
     fn name(&self) -> &'static str {

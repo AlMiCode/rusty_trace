@@ -5,13 +5,13 @@ use crate::render::{Point3, Ray, Vector3};
 use super::{HitRecord, Hittable};
 
 #[derive(Clone)]
-struct Translate {
+pub struct Translate {
     offset: Vector3,
     object: Box<dyn Hittable>,
 }
 
 impl Translate {
-    fn new(object: Box<dyn Hittable>, offset: Vector3) -> Self {
+    pub fn new(object: Box<dyn Hittable>, offset: Vector3) -> Self {
         Self { object, offset }
     }
 }
