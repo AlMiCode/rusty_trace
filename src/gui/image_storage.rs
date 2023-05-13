@@ -8,7 +8,7 @@ use crate::render::texture::Image;
 
 lazy_static! {
     pub static ref IMAGE_STORAGE: ImageStorage = ImageStorage::default();
-};
+}
 
 #[derive(Default)]
 pub struct ImageStorage {
