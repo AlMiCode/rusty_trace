@@ -1,11 +1,11 @@
 use std::{mem::take, sync::mpsc::Receiver};
 
-use crate::render::RenderedImage;
+use crate::{render::{texture::Image, RenderedImage}, gui::image_storage::IMAGE_STORAGE};
 
-use super::{image_to_retained, View};
-use egui::Ui;
-use egui_extras::RetainedImage;
-use image::DynamicImage;
+use super::View;
+use egui::{Ui};
+
+use image::{DynamicImage, Rgb32FImage, RgbImage};
 
 pub enum RenderedImageView {
     Waiting {
@@ -14,11 +14,12 @@ pub enum RenderedImageView {
     },
     Ready {
         title: String,
-        colour: RetainedImage,
-        albedo: RetainedImage,
-        normal: RetainedImage,
-        denoised: RetainedImage,
+        colour: Image,
+        albedo: Image,
+        normal: Image,
+        denoised: Image,
         viewed_option: u8,
+        size: (u32, u32),
     },
 }
 
@@ -39,6 +40,7 @@ impl View for RenderedImageView {
                 normal: _,
                 denoised: _,
                 viewed_option: _,
+                size: _
             } => &title,
         }
     }
@@ -47,17 +49,19 @@ impl View for RenderedImageView {
         match self {
             Self::Waiting { title, rx } => {
                 if let Ok(mut img) = rx.try_recv() {
-                    let colour =
-                        image_to_retained(&DynamicImage::ImageRgb32F(img.colour).into_rgb8());
-                    let albedo =
-                        image_to_retained(&DynamicImage::ImageRgb32F(img.albedo).into_rgb8());
+                    fn imgf32_to_imgu8(img: Rgb32FImage) -> RgbImage {
+                        DynamicImage::ImageRgb32F(img).into_rgb8()
+                    }
+
+                    let size = img.colour.dimensions();
+
+                    let colour = Image::new(imgf32_to_imgu8(img.colour));
+                    let albedo = Image::new(imgf32_to_imgu8(img.albedo));
                     for n in img.normal.as_mut().iter_mut() {
                         *n = (*n + 1.0) / 2.0;
                     }
-                    let normal =
-                        image_to_retained(&DynamicImage::ImageRgb32F(img.normal).into_rgb8());
-                    let denoised =
-                        image_to_retained(&DynamicImage::ImageRgb32F(img.denoised).into_rgb8());
+                    let normal = Image::new(imgf32_to_imgu8(img.normal));
+                    let denoised = Image::new(imgf32_to_imgu8(img.denoised));
                     *self = RenderedImageView::Ready {
                         title: take(title),
                         colour,
@@ -65,6 +69,7 @@ impl View for RenderedImageView {
                         normal,
                         denoised,
                         viewed_option: 0u8,
+                        size,
                     }
                 }
                 ui.spinner();
@@ -76,12 +81,18 @@ impl View for RenderedImageView {
                 normal,
                 denoised,
                 viewed_option,
+                size,
             } => {
+                fn show_image(ui: &mut Ui, img: &Image) {
+                    IMAGE_STORAGE.with_retained(img, |image| {
+                        image.show_max_size(ui, ui.available_size());
+                    });
+                }
                 match viewed_option {
-                    0 => colour.show_max_size(ui, ui.available_size()),
-                    1 => albedo.show_max_size(ui, ui.available_size()),
-                    2 => normal.show_max_size(ui, ui.available_size()),
-                    3 => denoised.show_max_size(ui, ui.available_size()),
+                    0 => show_image(ui, &colour),
+                    1 => show_image(ui, &albedo),
+                    2 => show_image(ui, &normal),
+                    3 => show_image(ui, &denoised),
                     _ => unreachable!(),
                 };
                 ui.horizontal_wrapped(|ui| {
@@ -108,8 +119,7 @@ impl View for RenderedImageView {
                     }
                 });
                 ui.horizontal_wrapped(|ui| {
-                    let size = colour.size();
-                    ui.label(format!("Size: {}x{}", size[0], size[1]));
+                    ui.label(format!("Size: {}x{}", size.0, size.1));
                     if ui.button("Save").clicked() {
                         eprintln!("TODO: Save image");
                     }

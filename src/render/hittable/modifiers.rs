@@ -91,7 +91,7 @@ impl Hittable for RotateY {
         unimplemented!()
     }
 
-    fn set_position(&mut self, c: Point3) {
+    fn set_position(&mut self, _c: Point3) {
         unimplemented!()
     }
 

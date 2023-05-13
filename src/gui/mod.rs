@@ -5,6 +5,8 @@ use eframe::egui;
 mod guielements;
 use guielements::*;
 
+mod image_storage;
+
 mod views;
 
 use crate::render::scene::Scene;

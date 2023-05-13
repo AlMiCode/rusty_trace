@@ -4,11 +4,8 @@ use crate::vec_repo::{Id, VecRepo};
 
 use super::{
     camera::CameraSettings,
-    hittable::{
-        plane::{Plane, Rect},
-        HittableVec, sphere::Sphere,
-    },
-    material::{DiffuseLight, Lambertian, Material, Dielectric},
+    hittable::{plane::Rect, sphere::Sphere, HittableVec},
+    material::{Dielectric, DiffuseLight, Lambertian, Material},
     texture::Texture,
     Colour,
 };
@@ -58,18 +55,29 @@ impl Scene {
             amplify: 15.0,
         });
 
-        let glass_mat = materials.insert(Dielectric { refractive_index: 1.5 });
+        let glass_mat = materials.insert(Dielectric {
+            refractive_index: 1.5,
+        });
 
-        let green_wall = Rect::new(&point3(555.0, 0.0, 0.0), 555.0, 555.0, Plane::YZ, green_mat);
-        let red_wall = Rect::new(&point3(0.0, 0.0, 0.0), 555.0, 555.0, Plane::YZ, red_mat);
-        let floor = Rect::new(&point3(0.0, 0.0, 0.0), 555.0, 555.0, Plane::XZ, white_mat);
-        let ceiling = Rect::new(&point3(0.0, 555.0, 0.0), 555.0, 555.0, Plane::XZ, white_mat);
-        let back_wall = Rect::new(&point3(0.0, 0.0, 555.0), 555.0, 555.0, Plane::XY, white_mat);
+        let point000 = point3(0.0, 0.0, 0.0);
+
+        let point500 = point3(555.0, 0.0, 0.0);
+        let point050 = point3(0.0, 555.0, 0.0);
+        let point005 = point3(0.0, 0.0, 555.0);
+
+        let point505 = point3(555.0, 0.0, 555.0);
+        let point055 = point3(0.0, 555.0, 555.0);
+
+        let point555 = point3(555.0, 555.0, 555.0);
+
+        let green_wall = Rect::new(point500, point555, green_mat);
+        let red_wall = Rect::new(point000, point055, red_mat);
+        let floor = Rect::new(point000, point505, white_mat);
+        let ceiling = Rect::new(point050, point555, white_mat);
+        let back_wall = Rect::new(point005, point555, white_mat);
         let light_source = Rect::new(
-            &point3(213.0, 554.0, 227.0),
-            130.0,
-            105.0,
-            Plane::XZ,
+            point3(213.0, 554.0, 227.0),
+            point3(343.0, 554.0, 322.0),
             light_mat,
         );
 
@@ -90,7 +98,7 @@ impl Scene {
                 Box::new(ceiling),
                 Box::new(back_wall),
                 Box::new(light_source),
-                Box::new(ball)
+                Box::new(ball),
             ],
             camera: camera_set,
             background: black_tex,

@@ -1,12 +1,18 @@
 use std::fmt::Display;
 
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, PartialEq, Eq, Default)]
 pub struct Id<T, IdT = u32> {
     id: IdT,
     phantom: std::marker::PhantomData<fn(T)>
 }
 
-impl<T: Clone> Copy for Id<T> {}
+impl<T> Copy for Id<T> {}
+
+impl<T> Clone for Id<T> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
 
 impl<T> Id<T> {
     pub fn new(n: impl Into<u32>) -> Self {

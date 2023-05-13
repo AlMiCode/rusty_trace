@@ -1,8 +1,8 @@
-use egui::{ColorImage, Response, Ui};
+use egui::{Response, Ui};
 
 mod texture_editor;
-use egui_extras::RetainedImage;
-use image::RgbImage;
+
+
 pub use texture_editor::TextureEditor;
 
 mod image_view;
@@ -28,17 +28,6 @@ fn point3_editor(ui: &mut Ui, p: &mut Point3) -> Response {
         x_field.union(y_field).union(z_field)
     })
     .inner
-}
-
-// helper function for internal use only
-fn image_to_retained(image: &RgbImage) -> RetainedImage {
-    RetainedImage::from_color_image(
-        "opened file",
-        ColorImage::from_rgb(
-            [image.width() as usize, image.height() as usize],
-            image.as_raw(),
-        ),
-    )
 }
 
 fn grid(ui: &mut Ui, name: &'static str, num_columns: usize, stripped: bool) -> egui::Grid {
