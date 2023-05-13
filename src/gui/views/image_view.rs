@@ -1,9 +1,12 @@
 use std::{mem::take, sync::mpsc::Receiver};
 
-use crate::{render::{texture::Image, RenderedImage}, gui::image_storage::IMAGE_STORAGE};
+use crate::{
+    gui::image_storage::IMAGE_STORAGE,
+    render::{texture::Image, RenderedImage},
+};
 
 use super::View;
-use egui::{Ui};
+use egui::Ui;
 
 use image::{DynamicImage, Rgb32FImage, RgbImage};
 
@@ -40,7 +43,7 @@ impl View for RenderedImageView {
                 normal: _,
                 denoised: _,
                 viewed_option: _,
-                size: _
+                size: _,
             } => &title,
         }
     }

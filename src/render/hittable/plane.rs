@@ -16,7 +16,11 @@ pub struct Rect {
 
 impl Rect {
     pub fn new(min_point: Point3, max_point: Point3, material_id: Id<Material>) -> Self {
-        Self { min_point, max_point, material_id }
+        Self {
+            min_point,
+            max_point,
+            material_id,
+        }
     }
 }
 
@@ -34,13 +38,31 @@ impl Hittable for Rect {
         let (x0, y0, z0) = self.min_point.into();
         let (x1, y1, z1) = self.max_point.into();
         if x0 == x1 {
-            return hit_plane_yz(ray, [y0, y1, z0, z1, x0], self.material_id, min_dist, max_dist);
+            return hit_plane_yz(
+                ray,
+                [y0, y1, z0, z1, x0],
+                self.material_id,
+                min_dist,
+                max_dist,
+            );
         }
         if y0 == y1 {
-            return hit_plane_xz(ray, [x0, x1, z0, z1, y0], self.material_id, min_dist, max_dist);
+            return hit_plane_xz(
+                ray,
+                [x0, x1, z0, z1, y0],
+                self.material_id,
+                min_dist,
+                max_dist,
+            );
         }
         if z0 == z1 {
-            return hit_plane_xy(ray, [x0, x1, y0, y1, z0], self.material_id, min_dist, max_dist);
+            return hit_plane_xy(
+                ray,
+                [x0, x1, y0, y1, z0],
+                self.material_id,
+                min_dist,
+                max_dist,
+            );
         }
         None
     }

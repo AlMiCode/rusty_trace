@@ -4,10 +4,7 @@ use enum_dispatch::enum_dispatch;
 use crate::vec_repo::{Id, VecRepo};
 
 use super::{
-    hittable::HitRecord,
-    random_f64, random_vec_in_sphere,
-    texture::Texture,
-    Colour, Ray, Vector3,
+    hittable::HitRecord, random_f64, random_vec_in_sphere, texture::Texture, Colour, Ray, Vector3,
 };
 
 fn reflect(vec: &Vector3, normal: &Vector3) -> Vector3 {

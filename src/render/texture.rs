@@ -1,4 +1,9 @@
-use std::{sync::Arc, collections::hash_map::DefaultHasher, hash::{Hash, Hasher}, ops::Deref};
+use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+    ops::Deref,
+    sync::Arc,
+};
 
 use super::{rgb_to_vec, Colour};
 

@@ -2,7 +2,6 @@ use egui::{Response, Ui};
 
 mod texture_editor;
 
-
 pub use texture_editor::TextureEditor;
 
 mod image_view;

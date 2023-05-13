@@ -1,11 +1,12 @@
-use std::{mem::take};
+use std::mem::take;
 
 use egui::{color_picker::show_color, Color32, Ui};
 
-
-use crate::{render::{
-    texture::{Texture, Image},
-}, vec_repo::{VecRepo, Id}, gui::image_storage::IMAGE_STORAGE};
+use crate::{
+    gui::image_storage::IMAGE_STORAGE,
+    render::texture::{Image, Texture},
+    vec_repo::{Id, VecRepo},
+};
 
 use super::{grid, View};
 use crate::io;
@@ -81,7 +82,6 @@ pub struct TextureEditor {
     textures: VecRepo<Texture>,
 }
 
-
 impl From<VecRepo<Texture>> for TextureEditor {
     fn from(value: VecRepo<Texture>) -> Self {
         Self {
@@ -119,7 +119,10 @@ impl View for TextureEditor {
     }
 
     fn ui(&mut self, ui: &mut Ui) {
-        let Self { editor_state, textures } = self;
+        let Self {
+            editor_state,
+            textures,
+        } = self;
         let mut tex_iter = textures.iter_mut().enumerate().peekable();
 
         grid(ui, "Textures1", 4, true).show(ui, |ui| {

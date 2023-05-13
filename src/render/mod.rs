@@ -1,4 +1,4 @@
-use std::{io::Write};
+use std::io::Write;
 
 use crate::{oidn::OIND, vec_repo::VecRepo};
 use cgmath::{ElementWise, InnerSpace, Zero};
@@ -68,7 +68,11 @@ pub fn render(dims: (u32, u32), scene: &Scene, sample_count: u32, depth: u32) ->
 
     let mut denoised_image = colour_image.clone();
     if OIND.availible() {
-        OIND.denoise(&mut denoised_image, Some(&albedo_image), Some(&normal_image));
+        OIND.denoise(
+            &mut denoised_image,
+            Some(&albedo_image),
+            Some(&normal_image),
+        );
         println!("Denoised: {:.2?}", now.elapsed());
     }
     RenderedImage {
@@ -86,7 +90,10 @@ pub struct Ray {
 
 impl Ray {
     pub fn new(origin: Point3, direction: Vector3) -> Self {
-        Ray { origin, direction: direction.normalize() }
+        Ray {
+            origin,
+            direction: direction.normalize(),
+        }
     }
     pub fn at(&self, t: f64) -> Point3 {
         self.origin + self.direction * t
@@ -180,7 +187,11 @@ fn random_f64(min: f64, max: f64) -> f64 {
 }
 
 fn random_vec() -> Vector3 {
-    Vector3::new(random_f64(-1.0, 1.0), random_f64(-1.0, 1.0), random_f64(-1.0, 1.0))
+    Vector3::new(
+        random_f64(-1.0, 1.0),
+        random_f64(-1.0, 1.0),
+        random_f64(-1.0, 1.0),
+    )
 }
 
 fn random_vec_in_sphere() -> Vector3 {
