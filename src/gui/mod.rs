@@ -6,6 +6,7 @@ mod guielements;
 use guielements::*;
 
 mod image_storage;
+mod logger;
 
 mod views;
 

@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use egui::{Color32, Separator};
 
 use crate::oidn::OIND;
@@ -8,6 +10,7 @@ use crate::render::scene::Scene;
 use crate::render::texture::Texture;
 use crate::vec_repo::{Id, VecRepo};
 
+use super::logger::LOGGER;
 use super::views;
 
 pub trait GuiElement {
@@ -111,7 +114,9 @@ impl GuiElement for ProjectEditor {
                         oidn_text,
                     );
                     ui.add(Separator::default().vertical());
-                    ui.label("Logging is important. Log messages will be diplayed here");
+                    LOGGER.with_latest(|str| {
+                        ui.label(str);
+                    });
                 })
             });
 
@@ -143,7 +148,12 @@ impl GuiElement for ProjectEditor {
                 textures: self.texture_editor.0.get_repo().clone(),
             };
             let (tx, rx) = std::sync::mpsc::channel();
-            std::thread::spawn(move || tx.send(render((400, 400), &scene, 3, 10)));
+            std::thread::spawn(move || {
+                let now = Instant::now();
+                tx.send(render((400, 400), &scene, 3, 10))
+                    .expect("Successfully sent image");
+                LOGGER.log(format!("Rendering finished in {:.2?}", now.elapsed()));
+            });
             let preview = views::RenderedImageView::new(title, rx);
             self.previews.push((preview, true));
         }

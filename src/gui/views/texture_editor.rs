@@ -1,5 +1,3 @@
-use std::mem::take;
-
 use egui::{color_picker::show_color, Color32, Ui};
 
 use crate::{
