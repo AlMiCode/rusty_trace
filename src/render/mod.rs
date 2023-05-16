@@ -2,7 +2,7 @@ use std::io::Write;
 
 use crate::{oidn::OIND, vec_repo::VecRepo};
 use cgmath::{ElementWise, InnerSpace, Zero};
-use hittable::{sphere::Sphere, Hittable};
+use hittable::{sphere::Sphere, HittableTrait};
 use image::{Rgb, Rgb32FImage};
 use material::{Material, MaterialTrait};
 use scene::Scene;
@@ -102,7 +102,7 @@ impl Ray {
 
 pub fn cast_ray(
     ray: Ray,
-    hittable: &dyn Hittable,
+    hittable: &dyn HittableTrait,
     background: &Texture,
     materials: &VecRepo<Material>,
     textures: &VecRepo<Texture>,
@@ -136,7 +136,7 @@ pub fn cast_ray(
 
 fn cast_ray_extended(
     ray: Ray,
-    hittable: &dyn Hittable,
+    hittable: &dyn HittableTrait,
     background: &Texture,
     materials: &VecRepo<Material>,
     textures: &VecRepo<Texture>,

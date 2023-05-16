@@ -7,7 +7,7 @@ use crate::{
     vec_repo::Id,
 };
 
-use super::{HitRecord, Hittable};
+use super::{HitRecord, HittableTrait};
 
 #[derive(Clone)]
 pub struct Rect {
@@ -26,7 +26,7 @@ impl Rect {
     }
 }
 
-impl Hittable for Rect {
+impl HittableTrait for Rect {
     fn get_position(&self) -> Point3 {
         self.min_point
     }

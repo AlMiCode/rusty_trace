@@ -1,4 +1,5 @@
 use cgmath::InnerSpace;
+use enum_dispatch::enum_dispatch;
 
 use crate::vec_repo::Id;
 
@@ -7,6 +8,10 @@ use super::{material::Material, Point3, Ray, Vector3};
 pub(crate) mod modifiers;
 pub(crate) mod rect;
 pub(crate) mod sphere;
+
+use sphere::Sphere;
+use rect::Rect;
+use modifiers::*;
 
 pub struct HitRecord {
     pub point: Point3,
@@ -50,7 +55,17 @@ impl HitRecord {
     }
 }
 
-pub trait Hittable: Send + HittableClone {
+#[enum_dispatch(HittableTrait)]
+#[derive(Clone)]
+pub enum Hittable {
+    Sphere,
+    Rect,
+    Translate,
+    RotateY
+}
+
+#[enum_dispatch]
+pub trait HittableTrait {
     fn name(&self) -> &'static str;
     fn hit_bounded(&self, ray: &Ray, min_dist: f64, max_dist: f64) -> Option<HitRecord>;
     fn hit(&self, ray: &Ray) -> Option<HitRecord> {
@@ -60,27 +75,8 @@ pub trait Hittable: Send + HittableClone {
     fn set_position(&mut self, c: Point3);
 }
 
-pub trait HittableClone {
-    fn clone_box(&self) -> Box<dyn Hittable>;
-}
-
-impl<T> HittableClone for T
-where
-    T: 'static + Hittable + Clone,
-{
-    fn clone_box(&self) -> Box<dyn Hittable> {
-        Box::new(self.clone())
-    }
-}
-
-impl Clone for Box<dyn Hittable> {
-    fn clone(&self) -> Box<dyn Hittable> {
-        self.clone_box()
-    }
-}
-
-pub type HittableVec = Vec<Box<dyn Hittable>>;
-impl Hittable for HittableVec {
+pub type HittableVec = Vec<Hittable>;
+impl HittableTrait for HittableVec {
     fn hit_bounded(&self, ray: &Ray, min_dist: f64, max_dist: f64) -> Option<HitRecord> {
         let mut result = None;
         let mut closest_dist = f64::INFINITY;

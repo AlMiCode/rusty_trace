@@ -84,12 +84,12 @@ impl Scene {
         let ball = Sphere::new(point3(400.0, 100.0, 80.0), 100.0, glass_mat);
 
         let box1 = Rect::new(point000, point3(165.0, 330.0, 165.0), white_mat);
-        let box1 = RotateY::new(Box::new(box1), 15.0);
-        let box1 = Translate::new(Box::new(box1), vec3(265.0, 0.0, 295.0));
+        let box1 = RotateY::new(Box::new(box1.into()), 15.0);
+        let box1 = Translate::new(Box::new(box1.into()), vec3(265.0, 0.0, 295.0));
 
         let box2 = Rect::new(point000, point3(165.0, 165.0, 165.0), white_mat);
-        let box2 = RotateY::new(Box::new(box2), -18.0);
-        let box2 = Translate::new(Box::new(box2), vec3(130.0, 0.0, 65.0));
+        let box2 = RotateY::new(Box::new(box2.into()), -18.0);
+        let box2 = Translate::new(Box::new(box2.into()), vec3(130.0, 0.0, 65.0));
 
         let camera_set = CameraSettings {
             look_from: point3(278.0, 278.0, -800.0),
@@ -100,15 +100,15 @@ impl Scene {
         };
         Self {
             hittable: vec![
-                Box::new(green_wall),
-                Box::new(red_wall),
-                Box::new(floor),
-                Box::new(ceiling),
-                Box::new(back_wall),
-                Box::new(light_source),
-                Box::new(ball),
-                Box::new(box1),
-                Box::new(box2),
+                green_wall.into(),
+                red_wall.into(),
+                floor.into(),
+                ceiling.into(),
+                back_wall.into(),
+                light_source.into(),
+                ball.into(),
+                box1.into(),
+                box2.into(),
             ],
             camera: camera_set,
             background: black_tex,

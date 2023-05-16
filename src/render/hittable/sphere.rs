@@ -5,7 +5,7 @@ use crate::{
     vec_repo::Id,
 };
 
-use super::{HitRecord, Hittable};
+use super::{HitRecord, HittableTrait};
 
 #[derive(Clone)]
 pub struct Sphere {
@@ -32,7 +32,7 @@ impl Sphere {
     }
 }
 
-impl Hittable for Sphere {
+impl HittableTrait for Sphere {
     fn hit_bounded(&self, ray: &Ray, min_dist: f64, max_dist: f64) -> Option<HitRecord> {
         let oc = ray.origin - self.center;
         let a = ray.direction.dot(ray.direction);

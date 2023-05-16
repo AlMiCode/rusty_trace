@@ -2,21 +2,21 @@ use cgmath::EuclideanSpace;
 
 use crate::render::{Point3, Ray, Vector3};
 
-use super::{HitRecord, Hittable};
+use super::{HitRecord, HittableTrait, Hittable};
 
 #[derive(Clone)]
 pub struct Translate {
     offset: Vector3,
-    object: Box<dyn Hittable>,
+    object: Box<Hittable>,
 }
 
 impl Translate {
-    pub fn new(object: Box<dyn Hittable>, offset: Vector3) -> Self {
+    pub fn new(object: Box<Hittable>, offset: Vector3) -> Self {
         Self { object, offset }
     }
 }
 
-impl Hittable for Translate {
+impl HittableTrait for Translate {
     fn hit_bounded(&self, ray: &Ray, min_dist: f64, max_dist: f64) -> Option<HitRecord> {
         let moved_ray = Ray::new(ray.origin - self.offset, ray.direction);
         self.object
@@ -45,11 +45,11 @@ impl Hittable for Translate {
 pub struct RotateY {
     sin_y: f64,
     cos_y: f64,
-    object: Box<dyn Hittable>,
+    object: Box<Hittable>,
 }
 
 impl RotateY {
-    pub fn new(object: Box<dyn Hittable>, degrees: f64) -> Self {
+    pub fn new(object: Box<Hittable>, degrees: f64) -> Self {
         let angle = degrees.to_radians();
         Self {
             sin_y: angle.sin(),
@@ -59,7 +59,7 @@ impl RotateY {
     }
 }
 
-impl Hittable for RotateY {
+impl HittableTrait for RotateY {
     fn hit_bounded(&self, ray: &Ray, min_dist: f64, max_dist: f64) -> Option<HitRecord> {
         let Ray {
             mut origin,
