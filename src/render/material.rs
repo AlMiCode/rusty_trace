@@ -1,5 +1,6 @@
 use cgmath::{InnerSpace, Zero};
 use enum_dispatch::enum_dispatch;
+use serde::{Serialize, Deserialize};
 
 use crate::vec_repo::{Id, VecRepo};
 
@@ -24,7 +25,7 @@ pub struct ScatterRecord {
 }
 
 #[enum_dispatch(MaterialTrait)]
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub enum Material {
     Lambertian,
     Metal,
@@ -54,26 +55,26 @@ pub trait MaterialTrait {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Lambertian {
     pub albedo: Id<Texture>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Metal {
     pub albedo: Id<Texture>,
     pub fuzz: f64,
 }
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Dielectric {
     pub refractive_index: f64,
 }
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct DiffuseLight {
     pub emit: Id<Texture>,
     pub amplify: f32,
 }
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Isotropic {
     pub albedo: Id<Texture>,
 }

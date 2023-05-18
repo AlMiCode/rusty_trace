@@ -1,5 +1,6 @@
 use crate::render::{random_vec_in_disc, Point3, Ray, Vector3};
 use cgmath::{point3, vec3, InnerSpace};
+use serde::{Serialize, Deserialize};
 
 #[derive(Clone)]
 pub struct Camera {
@@ -16,7 +17,7 @@ pub struct Camera {
     pub settings: CameraSettings,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct CameraSettings {
     pub look_from: Point3,
     pub look_at: Point3,

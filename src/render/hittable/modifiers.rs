@@ -1,10 +1,11 @@
 use cgmath::EuclideanSpace;
+use serde::{Deserialize, Serialize};
 
 use crate::render::{Point3, Ray, Vector3};
 
 use super::{HitRecord, HittableTrait, Hittable};
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Translate {
     offset: Vector3,
     object: Box<Hittable>,
@@ -41,7 +42,7 @@ impl HittableTrait for Translate {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct RotateY {
     sin_y: f64,
     cos_y: f64,

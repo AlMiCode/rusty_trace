@@ -1,6 +1,7 @@
 use std::mem::take;
 
 use cgmath::vec3;
+use serde::{Serialize, Deserialize};
 
 use crate::{
     render::{material::Material, Point3, Ray},
@@ -9,7 +10,7 @@ use crate::{
 
 use super::{HitRecord, HittableTrait};
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Rect {
     min_point: Point3,
     max_point: Point3,

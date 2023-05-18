@@ -1,4 +1,5 @@
 use cgmath::InnerSpace;
+use serde::{Serialize, Deserialize};
 
 use crate::{
     render::{material::Material, Point3, Ray, Vector3},
@@ -7,7 +8,7 @@ use crate::{
 
 use super::{HitRecord, HittableTrait};
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Sphere {
     pub center: Point3,
     pub radius: f64,

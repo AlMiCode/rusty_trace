@@ -1,6 +1,8 @@
 use std::fmt::Display;
 
-#[derive(Debug, PartialEq, Eq, Default)]
+use serde::{Serialize, Deserialize};
+
+#[derive(Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct Id<T, IdT = u32> {
     id: IdT,
     phantom: std::marker::PhantomData<fn(T)>,
@@ -29,7 +31,7 @@ impl<T> Display for Id<T> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct VecRepo<T> {
     data: Vec<Option<T>>,
 }

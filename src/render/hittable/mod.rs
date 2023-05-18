@@ -1,5 +1,6 @@
 use cgmath::InnerSpace;
 use enum_dispatch::enum_dispatch;
+use serde::{Serialize, Deserialize};
 
 use crate::vec_repo::Id;
 
@@ -56,7 +57,7 @@ impl HitRecord {
 }
 
 #[enum_dispatch(HittableTrait)]
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub enum Hittable {
     Sphere,
     Rect,

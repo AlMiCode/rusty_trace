@@ -1,4 +1,5 @@
 use cgmath::{point3, vec3};
+use serde::{Serialize, Deserialize};
 
 use crate::vec_repo::{Id, VecRepo};
 
@@ -10,7 +11,7 @@ use super::{
     Colour,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Scene {
     pub hittable: HittableVec,
     pub camera: CameraSettings,
@@ -98,7 +99,7 @@ impl Scene {
             aperture: 1.0 / 16.0,
             ..Default::default()
         };
-        Self {
+        let mut scene = Self {
             hittable: vec![
                 green_wall.into(),
                 red_wall.into(),
@@ -114,6 +115,9 @@ impl Scene {
             background: black_tex,
             materials,
             textures: textures.into(),
-        }
+        };
+        let serialized = rmp_serde::to_vec(&scene).unwrap();
+        scene = rmp_serde::from_slice(&serialized).unwrap();
+        scene
     }
 }
