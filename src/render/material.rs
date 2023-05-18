@@ -1,6 +1,6 @@
 use cgmath::{InnerSpace, Zero};
 use enum_dispatch::enum_dispatch;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::vec_repo::{Id, VecRepo};
 

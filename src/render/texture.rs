@@ -6,7 +6,11 @@ use std::{
     sync::Arc,
 };
 
-use serde::{Serialize, Deserialize, ser::SerializeStruct, de::{Visitor, self, SeqAccess, MapAccess}};
+use serde::{
+    de::{self, MapAccess, SeqAccess, Visitor},
+    ser::SerializeStruct,
+    Deserialize, Serialize,
+};
 
 use super::{rgb_to_vec, Colour};
 
@@ -94,8 +98,9 @@ impl Deref for Image {
 
 impl Serialize for Image {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: serde::Serializer {
+    where
+        S: serde::Serializer,
+    {
         let mut state = serializer.serialize_struct("Image", 4)?;
         state.serialize_field("width", &self.width())?;
         state.serialize_field("height", &self.height())?;
@@ -107,15 +112,21 @@ impl Serialize for Image {
 
 impl<'de> Deserialize<'de> for Image {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: serde::Deserializer<'de> {
-
-        enum Field { Width, Height, Data, Hash }
+    where
+        D: serde::Deserializer<'de>,
+    {
+        enum Field {
+            Width,
+            Height,
+            Data,
+            Hash,
+        }
         const FIELDS: &'static [&'static str] = &["width", "height", "data", "hash"];
         impl<'de> Deserialize<'de> for Field {
             fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-                where
-                    D: serde::Deserializer<'de> {
+            where
+                D: serde::Deserializer<'de>,
+            {
                 struct FieldVisitor;
                 impl<'de> Visitor<'de> for FieldVisitor {
                     type Value = Field;
@@ -154,18 +165,25 @@ impl<'de> Deserialize<'de> for Image {
             where
                 V: SeqAccess<'de>,
             {
-                let width = seq.next_element()?
+                let width = seq
+                    .next_element()?
                     .ok_or_else(|| de::Error::invalid_length(0, &self))?;
-                let height = seq.next_element()?
+                let height = seq
+                    .next_element()?
                     .ok_or_else(|| de::Error::invalid_length(1, &self))?;
-                let data = seq.next_element()?
-                .ok_or_else(|| de::Error::invalid_length(2, &self))?;
-                let hash = seq.next_element()?
-                .ok_or_else(|| de::Error::invalid_length(3, &self))?;
+                let data = seq
+                    .next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(2, &self))?;
+                let hash = seq
+                    .next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(3, &self))?;
 
                 Ok(Image {
-                    image: Arc::new(image::RgbImage::from_raw(width, height, data).expect("Size and data should match")),
-                    hash
+                    image: Arc::new(
+                        image::RgbImage::from_raw(width, height, data)
+                            .expect("Size and data should match"),
+                    ),
+                    hash,
                 })
             }
 
@@ -203,7 +221,6 @@ impl<'de> Deserialize<'de> for Image {
                             }
                             hash = Some(map.next_value()?);
                         }
-
                     }
                 }
                 let width = width.ok_or_else(|| de::Error::missing_field("width"))?;
@@ -211,12 +228,15 @@ impl<'de> Deserialize<'de> for Image {
                 let data = data.ok_or_else(|| de::Error::missing_field("data"))?;
                 let hash = hash.ok_or_else(|| de::Error::missing_field("hash"))?;
                 Ok(Image {
-                    image: Arc::new(image::RgbImage::from_raw(width, height, data).expect("Size and data should match")),
-                    hash
+                    image: Arc::new(
+                        image::RgbImage::from_raw(width, height, data)
+                            .expect("Size and data should match"),
+                    ),
+                    hash,
                 })
             }
         }
-                
+
         deserializer.deserialize_struct("Image", FIELDS, ImageVisitor)
     }
 }

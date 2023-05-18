@@ -1,6 +1,6 @@
 use cgmath::InnerSpace;
 use enum_dispatch::enum_dispatch;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::vec_repo::Id;
 
@@ -10,9 +10,9 @@ pub(crate) mod modifiers;
 pub(crate) mod rect;
 pub(crate) mod sphere;
 
-use sphere::Sphere;
-use rect::Rect;
 use modifiers::*;
+use rect::Rect;
+use sphere::Sphere;
 
 pub struct HitRecord {
     pub point: Point3,
@@ -62,7 +62,7 @@ pub enum Hittable {
     Sphere,
     Rect,
     Translate,
-    RotateY
+    RotateY,
 }
 
 #[enum_dispatch]

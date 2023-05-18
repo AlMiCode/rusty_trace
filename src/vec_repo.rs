@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct Id<T, IdT = u32> {

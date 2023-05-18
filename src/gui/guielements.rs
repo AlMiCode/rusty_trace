@@ -6,7 +6,7 @@ use crate::oidn::OIND;
 use crate::render::hittable::HittableVec;
 use crate::render::material::Material;
 use crate::render::render;
-use crate::render::scene::Scene;
+use crate::render::scene::{Scene, SceneRef};
 use crate::render::texture::Texture;
 use crate::vec_repo::{Id, VecRepo};
 
@@ -69,6 +69,43 @@ impl ProjectEditor {
             previews: Vec::new(),
         }
     }
+
+    pub fn save_scene(&mut self) {
+        rfd::FileDialog::new().save_file().and_then(|path| {
+            let scene = SceneRef {
+                hittable: &self.hittable,
+                camera: self.cameras_editor.0.last_chosen_camera(),
+                background: &self.background,
+                materials: &self.materials,
+                textures: self.texture_editor.0.get_repo(),
+            };
+            Some(
+                rmp_serde::to_vec(&scene)
+                    .map(|data| miniz_oxide::deflate::compress_to_vec(&data, 10))
+                    .map(|contents| std::fs::write(path, contents))
+                    .unwrap(),
+            )
+        });
+    }
+
+    pub fn load_scene(&mut self) {
+        rfd::FileDialog::new()
+            .pick_file()
+            .and_then(|path| std::fs::read(path).ok())
+            .and_then(|vec| miniz_oxide::inflate::decompress_to_vec(&vec).ok())
+            .and_then(|vec| rmp_serde::from_slice(&vec).ok())
+            .and_then(|scene: Scene| {
+                self.cameras_editor = (
+                    views::CamerasEditor::with_default(scene.camera),
+                    self.cameras_editor.1,
+                );
+                self.texture_editor = (
+                    views::TextureEditor::from(scene.textures),
+                    self.texture_editor.1,
+                );
+                Some(42)
+            });
+    }
 }
 
 impl GuiElement for ProjectEditor {
@@ -90,6 +127,12 @@ impl GuiElement for ProjectEditor {
                         .clicked()
                     {
                         self.texture_editor.1 = !self.texture_editor.1;
+                    }
+                    if ui.selectable_label(false, "Load").clicked() {
+                        self.load_scene()
+                    }
+                    if ui.selectable_label(false, "Save").clicked() {
+                        self.save_scene()
                     }
                     ui.add_space(ui.available_width() - 240.0);
                     ui.label("Background:");

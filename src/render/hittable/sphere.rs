@@ -1,5 +1,5 @@
 use cgmath::InnerSpace;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     render::{material::Material, Point3, Ray, Vector3},

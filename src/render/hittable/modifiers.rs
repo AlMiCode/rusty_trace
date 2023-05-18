@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::render::{Point3, Ray, Vector3};
 
-use super::{HitRecord, HittableTrait, Hittable};
+use super::{HitRecord, Hittable, HittableTrait};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Translate {

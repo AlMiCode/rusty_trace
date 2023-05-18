@@ -1,11 +1,16 @@
 use cgmath::{point3, vec3};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::vec_repo::{Id, VecRepo};
 
 use super::{
     camera::CameraSettings,
-    hittable::{rect::Rect, sphere::Sphere, HittableVec, modifiers::{Translate, RotateY}},
+    hittable::{
+        modifiers::{RotateY, Translate},
+        rect::Rect,
+        sphere::Sphere,
+        HittableVec,
+    },
     material::{Dielectric, DiffuseLight, Lambertian, Material},
     texture::Texture,
     Colour,
@@ -18,6 +23,27 @@ pub struct Scene {
     pub background: Id<Texture>,
     pub materials: VecRepo<Material>,
     pub textures: VecRepo<Texture>,
+}
+
+#[derive(Clone, Serialize)]
+pub struct SceneRef<'a> {
+    pub hittable: &'a HittableVec,
+    pub camera: &'a CameraSettings,
+    pub background: &'a Id<Texture>,
+    pub materials: &'a VecRepo<Material>,
+    pub textures: &'a VecRepo<Texture>,
+}
+
+impl<'a> From<&'a Scene> for SceneRef<'a> {
+    fn from(value: &'a Scene) -> Self {
+        SceneRef {
+            hittable: &value.hittable,
+            camera: &value.camera,
+            background: &value.background,
+            materials: &value.materials,
+            textures: &value.textures,
+        }
+    }
 }
 
 impl Default for Scene {

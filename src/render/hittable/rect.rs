@@ -1,7 +1,7 @@
 use std::mem::take;
 
 use cgmath::vec3;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     render::{material::Material, Point3, Ray},
@@ -117,7 +117,10 @@ impl HittableTrait for Rect {
             if lhs.is_none() {
                 return std::cmp::Ordering::Greater;
             }
-            lhs.as_ref().unwrap().distance.total_cmp(&rhs.as_ref().unwrap().distance)
+            lhs.as_ref()
+                .unwrap()
+                .distance
+                .total_cmp(&rhs.as_ref().unwrap().distance)
         });
         take(&mut sides[0])
     }

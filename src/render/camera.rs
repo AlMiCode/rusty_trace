@@ -1,6 +1,6 @@
 use crate::render::{random_vec_in_disc, Point3, Ray, Vector3};
 use cgmath::{point3, vec3, InnerSpace};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone)]
 pub struct Camera {

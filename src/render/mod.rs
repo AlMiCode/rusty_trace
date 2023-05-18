@@ -5,8 +5,9 @@ use cgmath::{ElementWise, InnerSpace, Zero};
 use hittable::{sphere::Sphere, HittableTrait};
 use image::{Rgb, Rgb32FImage};
 use material::{Material, MaterialTrait};
-use scene::Scene;
 use texture::Texture;
+
+use self::scene::{Scene, SceneRef};
 
 pub mod camera;
 pub mod hittable;
@@ -25,17 +26,17 @@ pub struct RenderedImage {
     pub denoised: Rgb32FImage,
 }
 
-pub fn render(dims: (u32, u32), scene: &Scene, sample_count: u32, depth: u32) -> RenderedImage {
+pub fn render<'a>(dims: (u32, u32), scene: &Scene, sample_count: u32, depth: u32) -> RenderedImage {
     use std::time::Instant;
     let now = Instant::now();
 
-    let Scene {
+    let SceneRef {
         hittable,
         camera,
         background,
         materials,
         textures,
-    } = scene;
+    } = scene.into();
 
     let (width, height) = dims;
     let camera = camera.build_with_dimensions(width, height);
